@@ -35,6 +35,12 @@ export const createInvestment = (data) => api.post('/investments', data);
 export const updateInvestment = (id, data) => api.patch(`/investments/${id}`, data);
 export const deleteInvestment = (id) => api.delete(`/investments/${id}`);
 
+// ─── Subscriptions ────────────────────────────────────────────────────────────
+export const getSubscriptions = () => api.get('/subscriptions');
+export const createSubscription = (data) => api.post('/subscriptions', data);
+export const updateSubscription = (id, data) => api.patch(`/subscriptions/${id}`, data);
+export const deleteSubscription = (id) => api.delete(`/subscriptions/${id}`);
+
 // ─── Categories ───────────────────────────────────────────────────────────────
 export const getCategories = () => api.get('/categories');
 export const createCategory = (data) => api.post('/categories', data);

@@ -12,7 +12,7 @@ from backend.models import init_db
 from backend.routes import (
     transactions_router, accounts_router, wishlist_router,
     investments_router, categories_router, dashboard_router,
-    settings_router, import_router, llm_router,
+    settings_router, import_router, llm_router, subscriptions_router
 )
 
 app = FastAPI(
@@ -46,6 +46,7 @@ app.include_router(categories_router)
 app.include_router(settings_router)
 app.include_router(import_router)
 app.include_router(llm_router)
+app.include_router(subscriptions_router)
 
 
 # ─── Serve built frontend (production) ───────────────────────────────────────

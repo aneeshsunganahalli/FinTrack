@@ -8,6 +8,7 @@ import Transactions from './pages/Transactions';
 import Accounts from './pages/Accounts';
 import Wishlist from './pages/Wishlist';
 import Investments from './pages/Investments';
+import Subscriptions from './pages/Subscriptions';
 import Analytics from './pages/Analytics';
 import ImportExport from './pages/ImportExport';
 import AIInsights from './pages/AIInsights';
@@ -24,6 +25,7 @@ export default function App() {
               <Route path="/"             element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/accounts"     element={<Accounts />} />
+              <Route path="/subscriptions" element={<Subscriptions />} />
               <Route path="/wishlist"     element={<Wishlist />} />
               <Route path="/investments"  element={<Investments />} />
               <Route path="/analytics"    element={<Analytics />} />

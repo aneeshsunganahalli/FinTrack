@@ -7,3 +7,4 @@ from .dashboard import router as dashboard_router
 from .settings import router as settings_router
 from .import_export import router as import_router
 from .llm import router as llm_router
+from .subscriptions import router as subscriptions_router

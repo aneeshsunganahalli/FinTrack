@@ -2,7 +2,7 @@
 from pydantic import BaseModel, validator
 from typing import Optional, List
 from datetime import date, datetime
-from backend.models.database import TransactionType, AccountType, WishlistPriority
+from backend.models.database import TransactionType, AccountType, WishlistPriority, BillingCycle, SubscriptionStatus
 
 
 # ─── Category Schemas ─────────────────────────────────────────────────────────
@@ -172,6 +172,47 @@ class StockOut(BaseModel):
     units: Optional[float]
     date_invested: Optional[date]
     current_value: Optional[float]
+    notes: Optional[str]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    class Config:
+        from_attributes = True
+
+
+# ─── Subscriptions ────────────────────────────────────────────────────────────
+
+class SubscriptionCreate(BaseModel):
+    name: str
+    amount: float
+    billing_cycle: BillingCycle
+    next_billing_date: Optional[date] = None
+    category: Optional[str] = None
+    account_id: Optional[int] = None
+    image_url: Optional[str] = None
+    status: SubscriptionStatus = SubscriptionStatus.active
+    notes: Optional[str] = None
+
+class SubscriptionUpdate(BaseModel):
+    name: Optional[str]
+    amount: Optional[float]
+    billing_cycle: Optional[BillingCycle]
+    next_billing_date: Optional[date]
+    category: Optional[str]
+    account_id: Optional[int]
+    image_url: Optional[str]
+    status: Optional[SubscriptionStatus]
+    notes: Optional[str]
+
+class SubscriptionOut(BaseModel):
+    id: int
+    name: str
+    amount: float
+    billing_cycle: BillingCycle
+    next_billing_date: Optional[date]
+    category: Optional[str]
+    account_id: Optional[int]
+    image_url: Optional[str]
+    status: SubscriptionStatus
     notes: Optional[str]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]

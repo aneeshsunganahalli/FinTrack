@@ -49,6 +49,15 @@ class WishlistPriority(str, enum.Enum):
     medium = "medium"
     high = "high"
 
+class BillingCycle(str, enum.Enum):
+    monthly = "monthly"
+    yearly = "yearly"
+    weekly = "weekly"
+
+class SubscriptionStatus(str, enum.Enum):
+    active = "active"
+    cancelled = "cancelled"
+
 
 # ─── Models ───────────────────────────────────────────────────────────────────
 
@@ -138,6 +147,25 @@ class Settings(Base):
     key = Column(String(100), unique=True, nullable=False)
     value = Column(Text)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    amount = Column(Float, nullable=False)
+    billing_cycle = Column(SAEnum(BillingCycle), default=BillingCycle.monthly)
+    next_billing_date = Column(Date)
+    category = Column(String(100))
+    account_id = Column(Integer, ForeignKey("bank_accounts.id"), nullable=True)
+    image_url = Column(Text)
+    status = Column(SAEnum(SubscriptionStatus), default=SubscriptionStatus.active)
+    notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    account_rel = relationship("BankAccount")
 
 
 def init_db():
