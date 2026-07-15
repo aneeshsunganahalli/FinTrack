@@ -7,7 +7,7 @@ import Spinner from '../components/Spinner';
 import RecentTransactions from '../components/RecentTransactions';
 import { useToast } from '../components/Toast';
 
-const EMPTY = { name: '', bank_name: '', account_type: 'savings', current_balance: '', minimum_balance: '' };
+const EMPTY = { name: '', bank_name: '', account_type: 'savings', current_balance: '', minimum_balance: '', image_url: '' };
 
 function AccountForm({ initial, onSave, onClose }) {
   const [form, setForm] = useState({ ...EMPTY, ...initial });
@@ -57,6 +57,10 @@ function AccountForm({ initial, onSave, onClose }) {
           <input type="number" step="0.01" className="form-input" value={form.minimum_balance} onChange={e => set('minimum_balance', e.target.value)} />
         </div>
       </div>
+      <div className="form-group">
+        <label className="form-label">Bank Logo URL</label>
+        <input className="form-input" placeholder="https://..." value={form.image_url} onChange={e => set('image_url', e.target.value)} />
+      </div>
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
         <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? <Spinner size={15} /> : null} Save</button>
@@ -79,10 +83,15 @@ function AccountCard({ account, onEdit, onDelete }) {
 
       <div style={{ padding: '18px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{account.name}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-              {account.bank_name} · {account.account_type}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            {account.image_url && (
+              <img src={account.image_url} alt={account.name} style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+            )}
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{account.name}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                {account.bank_name} · {account.account_type}
+              </div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>

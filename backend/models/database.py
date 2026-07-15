@@ -36,6 +36,7 @@ def get_db():
 class TransactionType(str, enum.Enum):
     income = "income"
     expense = "expense"
+    transfer = "transfer"
 
 class AccountType(str, enum.Enum):
     savings = "savings"
@@ -72,10 +73,11 @@ class BankAccount(Base):
     account_type = Column(SAEnum(AccountType), default=AccountType.savings)
     current_balance = Column(Float, default=0.0)
     minimum_balance = Column(Float, default=0.0)
+    image_url = Column(Text)
     last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    transactions = relationship("Transaction", back_populates="account_rel")
+    transactions = relationship("Transaction", back_populates="account_rel", foreign_keys="[Transaction.account_id]")
 
 
 class Transaction(Base):
@@ -90,11 +92,13 @@ class Transaction(Base):
     subcategory = Column(String(100))
     account_id = Column(Integer, ForeignKey("bank_accounts.id"), nullable=True)
     account = Column(String(200))           # denormalised fallback
+    to_account_id = Column(Integer, ForeignKey("bank_accounts.id"), nullable=True)
+    to_account = Column(String(200))
     note = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     category_rel = relationship("Category", back_populates="transactions")
-    account_rel = relationship("BankAccount", back_populates="transactions")
+    account_rel = relationship("BankAccount", back_populates="transactions", foreign_keys=[account_id])
 
 
 class WishlistItem(Base):

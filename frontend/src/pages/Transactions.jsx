@@ -15,6 +15,8 @@ function makeEmptyRow(defaults = {}) {
     category: '',
     account_id: defaults.account_id || '',
     account: defaults.account || '',
+    to_account_id: '',
+    to_account: '',
     note: '',
     subcategory: '',
   };
@@ -39,6 +41,8 @@ function TransactionForm({ initial, categories, accounts, defaultAccountId, onSa
     category: '',
     account_id: '',
     account: '',
+    to_account_id: '',
+    to_account: '',
     note: '',
     subcategory: '',
     ...resolvedInitial,
@@ -48,12 +52,12 @@ function TransactionForm({ initial, categories, accounts, defaultAccountId, onSa
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  function handleAccountChange(accountId) {
+  function handleAccountChange(fieldId, fieldName, accountId) {
     const acc = accounts.find(a => String(a.id) === String(accountId));
     setForm(f => ({
       ...f,
-      account_id: accountId ? parseInt(accountId) : '',
-      account: acc ? acc.name : '',
+      [fieldId]: accountId ? parseInt(accountId) : '',
+      [fieldName]: acc ? acc.name : '',
     }));
   }
 
@@ -84,6 +88,7 @@ function TransactionForm({ initial, categories, accounts, defaultAccountId, onSa
           <select className="form-select" value={form.type} onChange={e => set('type', e.target.value)}>
             <option value="expense">Expense</option>
             <option value="income">Income</option>
+            <option value="transfer">Transfer</option>
           </select>
         </div>
       </div>
@@ -92,16 +97,26 @@ function TransactionForm({ initial, categories, accounts, defaultAccountId, onSa
         <input type="number" step="0.01" min="0" className="form-input" placeholder="0.00" value={form.amount} onChange={e => set('amount', e.target.value)} required />
       </div>
       <div className="grid-2">
+        {form.type !== 'transfer' ? (
+          <div className="form-group">
+            <label className="form-label">Category</label>
+            <select className="form-select" value={form.category} onChange={e => set('category', e.target.value)}>
+              <option value="">— Select —</option>
+              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </select>
+          </div>
+        ) : (
+          <div className="form-group">
+            <label className="form-label">To Account</label>
+            <select className="form-select" value={form.to_account_id || ''} onChange={e => handleAccountChange('to_account_id', 'to_account', e.target.value)}>
+              <option value="">— Select Target —</option>
+              {accounts.filter(a => a.id !== form.account_id).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </div>
+        )}
         <div className="form-group">
-          <label className="form-label">Category</label>
-          <select className="form-select" value={form.category} onChange={e => set('category', e.target.value)}>
-            <option value="">— Select —</option>
-            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-          </select>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Account</label>
-          <select className="form-select" value={form.account_id || ''} onChange={e => handleAccountChange(e.target.value)}>
+          <label className="form-label">{form.type === 'transfer' ? 'From Account' : 'Account'}</label>
+          <select className="form-select" value={form.account_id || ''} onChange={e => handleAccountChange('account_id', 'account', e.target.value)}>
             <option value="">— Select —</option>
             {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
@@ -136,9 +151,10 @@ function BulkEntryPanel({ categories, accounts, defaultAccountId, onDone }) {
   function updateRow(key, field, value) {
     setRows(prev => prev.map(r => {
       if (r._key !== key) return r;
-      if (field === 'account_id') {
+      if (field === 'account_id' || field === 'to_account_id') {
         const acc = accounts.find(a => String(a.id) === String(value));
-        return { ...r, account_id: value ? parseInt(value) : '', account: acc ? acc.name : '' };
+        const nameField = field === 'account_id' ? 'account' : 'to_account';
+        return { ...r, [field]: value ? parseInt(value) : '', [nameField]: acc ? acc.name : '' };
       }
       return { ...r, [field]: value };
     }));
@@ -167,6 +183,8 @@ function BulkEntryPanel({ categories, accounts, defaultAccountId, onDone }) {
         category: r.category || null,
         account_id: r.account_id || null,
         account: r.account || null,
+        to_account_id: r.to_account_id || null,
+        to_account: r.to_account || null,
         note: r.note || null,
         subcategory: null,
       }));
@@ -227,17 +245,29 @@ function BulkEntryPanel({ categories, accounts, defaultAccountId, onDone }) {
             value={row.type}
             onChange={e => updateRow(row._key, 'type', e.target.value)}
           >
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
+            <option value="expense">Exp.</option>
+            <option value="income">Inc.</option>
+            <option value="transfer">Trsf.</option>
           </select>
-          <select
-            className="form-select"
-            value={row.category}
-            onChange={e => updateRow(row._key, 'category', e.target.value)}
-          >
-            <option value="">—</option>
-            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-          </select>
+          {row.type !== 'transfer' ? (
+            <select
+              className="form-select"
+              value={row.category}
+              onChange={e => updateRow(row._key, 'category', e.target.value)}
+            >
+              <option value="">—</option>
+              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </select>
+          ) : (
+            <select
+              className="form-select"
+              value={row.to_account_id || ''}
+              onChange={e => updateRow(row._key, 'to_account_id', e.target.value)}
+            >
+              <option value="">To...</option>
+              {accounts.filter(a => a.id !== row.account_id).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          )}
           <select
             className="form-select"
             value={row.account_id || ''}
@@ -406,6 +436,7 @@ export default function Transactions() {
               <option value="">All</option>
               <option value="income">Income</option>
               <option value="expense">Expense</option>
+              <option value="transfer">Transfer</option>
             </select>
           </div>
           <div className="form-group" style={{ flex: '1 1 160px' }}>
@@ -458,16 +489,22 @@ export default function Transactions() {
                   <tr key={tx.id}>
                     <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{fmtDate(tx.date)}</td>
                     <td>
-                      <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{tx.category || '—'}</span>
-                      {tx.subcategory && <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block' }}>{tx.subcategory}</span>}
+                      {tx.type === 'transfer' ? (
+                        <span style={{ fontSize: 13, color: 'var(--accent-light)' }}>➔ {tx.to_account || 'Unknown'}</span>
+                      ) : (
+                        <>
+                          <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{tx.category || '—'}</span>
+                          {tx.subcategory && <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block' }}>{tx.subcategory}</span>}
+                        </>
+                      )}
                     </td>
                     <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{tx.account || '—'}</td>
                     <td style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.note || '—'}</td>
                     <td>
                       <span className={`badge badge-${tx.type}`}>{tx.type}</span>
                     </td>
-                    <td style={{ textAlign: 'right', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: tx.type === 'income' ? 'var(--accent)' : 'var(--red)' }}>
-                      {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount)}
+                    <td style={{ textAlign: 'right', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: tx.type === 'income' ? 'var(--accent)' : (tx.type === 'transfer' ? 'var(--text-primary)' : 'var(--red)') }}>
+                      {tx.type === 'income' ? '+' : (tx.type === 'transfer' ? '' : '-')}{fmt(tx.amount)}
                     </td>
                     <td>
                       <div className="row-actions">

@@ -13,28 +13,33 @@ from backend.models.schemas import (
 router = APIRouter(prefix="/api/transactions", tags=["transactions"])
 
 
-def _adjust_balance(db: Session, account_id: int | None, amount: float, tx_type: str, reverse: bool = False):
+def _adjust_balance(db: Session, account_id: int | None, amount: float, tx_type: str, reverse: bool = False, to_account_id: int | None = None):
     """Adjust a bank account's balance for a transaction.
     reverse=True undoes the original effect (used for deletes and the 'old' side of updates).
     """
-    if not account_id:
-        return
-    acc = db.query(BankAccount).filter_by(id=account_id).first()
-    if not acc:
-        return
+    if account_id:
+        acc = db.query(BankAccount).filter_by(id=account_id).first()
+        if acc:
+            if reverse:
+                # Undo: income was added → subtract; expense/transfer was subtracted → add
+                if tx_type == "income":
+                    acc.current_balance -= amount
+                else:
+                    acc.current_balance += amount
+            else:
+                # Apply: income → add; expense/transfer → subtract
+                if tx_type == "income":
+                    acc.current_balance += amount
+                else:
+                    acc.current_balance -= amount
 
-    if reverse:
-        # Undo: income was added → subtract; expense was subtracted → add
-        if tx_type == "income":
-            acc.current_balance -= amount
-        else:
-            acc.current_balance += amount
-    else:
-        # Apply: income → add; expense → subtract
-        if tx_type == "income":
-            acc.current_balance += amount
-        else:
-            acc.current_balance -= amount
+    if tx_type == "transfer" and to_account_id:
+        to_acc = db.query(BankAccount).filter_by(id=to_account_id).first()
+        if to_acc:
+            if reverse:
+                to_acc.current_balance -= amount
+            else:
+                to_acc.current_balance += amount
 
 
 @router.get("", response_model=List[TransactionOut])
@@ -70,11 +75,15 @@ def create_transaction(payload: TransactionCreate, db: Session = Depends(get_db)
         acc = db.query(BankAccount).filter_by(id=data["account_id"]).first()
         if acc:
             data["account"] = acc.name
+    if data.get("to_account_id") and not data.get("to_account"):
+        to_acc = db.query(BankAccount).filter_by(id=data["to_account_id"]).first()
+        if to_acc:
+            data["to_account"] = to_acc.name
     t = Transaction(**data)
     db.add(t)
 
     # Adjust bank account balance
-    _adjust_balance(db, t.account_id, t.amount, t.type.value)
+    _adjust_balance(db, t.account_id, t.amount, t.type.value, to_account_id=t.to_account_id)
 
     db.commit()
     db.refresh(t)
@@ -91,9 +100,13 @@ def create_transactions_bulk(payload: TransactionBulkCreate, db: Session = Depen
             acc = db.query(BankAccount).filter_by(id=data["account_id"]).first()
             if acc:
                 data["account"] = acc.name
+        if data.get("to_account_id") and not data.get("to_account"):
+            to_acc = db.query(BankAccount).filter_by(id=data["to_account_id"]).first()
+            if to_acc:
+                data["to_account"] = to_acc.name
         t = Transaction(**data)
         db.add(t)
-        _adjust_balance(db, t.account_id, t.amount, t.type.value)
+        _adjust_balance(db, t.account_id, t.amount, t.type.value, to_account_id=t.to_account_id)
         db.flush()  # get id assigned
         created.append(t)
 
@@ -118,13 +131,13 @@ def update_transaction(tid: int, payload: TransactionUpdate, db: Session = Depen
         raise HTTPException(404, "Transaction not found")
 
     # Reverse old balance effect
-    _adjust_balance(db, t.account_id, t.amount, t.type.value, reverse=True)
+    _adjust_balance(db, t.account_id, t.amount, t.type.value, reverse=True, to_account_id=t.to_account_id)
 
     for k, v in payload.dict(exclude_unset=True).items():
         setattr(t, k, v)
 
     # Apply new balance effect
-    _adjust_balance(db, t.account_id, t.amount, t.type.value)
+    _adjust_balance(db, t.account_id, t.amount, t.type.value, to_account_id=t.to_account_id)
 
     db.commit()
     db.refresh(t)
@@ -138,7 +151,7 @@ def delete_transaction(tid: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "Transaction not found")
 
     # Reverse balance effect
-    _adjust_balance(db, t.account_id, t.amount, t.type.value, reverse=True)
+    _adjust_balance(db, t.account_id, t.amount, t.type.value, reverse=True, to_account_id=t.to_account_id)
 
     db.delete(t)
     db.commit()

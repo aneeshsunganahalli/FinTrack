@@ -34,6 +34,7 @@ class BankAccountCreate(BaseModel):
     account_type: Optional[AccountType] = AccountType.savings
     current_balance: Optional[float] = 0.0
     minimum_balance: Optional[float] = 0.0
+    image_url: Optional[str] = None
 
 class BankAccountUpdate(BaseModel):
     name: Optional[str]
@@ -41,6 +42,7 @@ class BankAccountUpdate(BaseModel):
     account_type: Optional[AccountType]
     current_balance: Optional[float]
     minimum_balance: Optional[float]
+    image_url: Optional[str]
 
 class BankAccountOut(BaseModel):
     id: int
@@ -49,6 +51,7 @@ class BankAccountOut(BaseModel):
     account_type: AccountType
     current_balance: float
     minimum_balance: float
+    image_url: Optional[str]
     last_updated: Optional[datetime]
     created_at: Optional[datetime]
     class Config:
@@ -66,6 +69,8 @@ class TransactionCreate(BaseModel):
     subcategory: Optional[str] = None
     account_id: Optional[int] = None
     account: Optional[str] = None
+    to_account_id: Optional[int] = None
+    to_account: Optional[str] = None
     note: Optional[str] = None
 
 class TransactionUpdate(BaseModel):
@@ -77,6 +82,8 @@ class TransactionUpdate(BaseModel):
     subcategory: Optional[str]
     account_id: Optional[int]
     account: Optional[str]
+    to_account_id: Optional[int]
+    to_account: Optional[str]
     note: Optional[str]
 
 class TransactionOut(BaseModel):
@@ -89,6 +96,8 @@ class TransactionOut(BaseModel):
     subcategory: Optional[str]
     account_id: Optional[int]
     account: Optional[str]
+    to_account_id: Optional[int]
+    to_account: Optional[str]
     note: Optional[str]
     created_at: Optional[datetime]
     class Config:
