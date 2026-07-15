@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  fintrack:
+    build: .
+    container_name: fintrack
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./finance.db:/app/finance.db
+    environment:
+      - FINTRACK_DB=/app/finance.db
+    restart: unless-stopped
+

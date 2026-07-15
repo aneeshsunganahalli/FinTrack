@@ -1,0 +1,165 @@
+import { useEffect, useState, useRef } from 'react';
+import { Bot, Send, Wifi, WifiOff, Sparkles } from 'lucide-react';
+import { getLLMStatus, chatWithLLM } from '../lib/api';
+import Spinner from '../components/Spinner';
+
+const SUGGESTIONS = [
+  'Summarize my spending this month',
+  'Where can I cut costs?',
+  'Am I saving enough based on my income?',
+  'Which category do I overspend in most?',
+  'Give me 3 tips to improve my finances',
+];
+
+export default function AIInsights() {
+  const [status, setStatus] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    getLLMStatus()
+      .then(r => setStatus(r.data))
+      .catch(() => setStatus({ available: false }))
+      .finally(() => setChecking(false));
+  }, []);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  async function sendMessage(text) {
+    const msg = text || input.trim();
+    if (!msg || loading) return;
+    setInput('');
+    setMessages(m => [...m, { role: 'user', text: msg }]);
+    setLoading(true);
+    try {
+      const res = await chatWithLLM(msg, true);
+      setMessages(m => [...m, { role: 'ai', text: res.data.response || 'No response received.' }]);
+    } catch {
+      setMessages(m => [...m, { role: 'ai', text: '⚠ Failed to get a response. Check Ollama is running.', error: true }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">AI Insights</h1>
+          <p className="page-subtitle">Ask your local LLM about your finances</p>
+        </div>
+        {/* Status indicator */}
+        {checking ? (
+          <Spinner size={20} />
+        ) : status?.available ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: 'rgba(0,208,156,0.1)', borderRadius: 99, border: '1px solid var(--border-accent)', fontSize: 13 }}>
+            <Wifi size={14} color="var(--accent)" />
+            <span style={{ color: 'var(--accent)' }}>{status.model} · Connected</span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: 'rgba(255,83,112,0.1)', borderRadius: 99, border: '1px solid rgba(255,83,112,0.3)', fontSize: 13 }}>
+            <WifiOff size={14} color="var(--red)" />
+            <span style={{ color: 'var(--red)' }}>Ollama not detected</span>
+          </div>
+        )}
+      </div>
+
+      {!status?.available && !checking && (
+        <div className="alert alert-warning" style={{ marginBottom: 24 }}>
+          <strong>Ollama is not running.</strong> Start Ollama locally with{' '}
+          <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>ollama serve</code>{' '}
+          and configure the model in Settings. Chat is disabled until connected.
+        </div>
+      )}
+
+      <div className="grid-2" style={{ alignItems: 'start', gap: 24 }}>
+        {/* Chat window */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <h3 className="section-title" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Bot size={16} color="var(--accent)" /> Chat
+          </h3>
+
+          <div className="chat-messages" style={{ minHeight: 300 }}>
+            {messages.length === 0 && (
+              <div className="empty-state" style={{ padding: '40px 0' }}>
+                <Sparkles size={32} style={{ opacity: 0.3 }} />
+                <span className="empty-text">Ask anything about your finances</span>
+              </div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={`chat-msg ${m.role}`} style={m.error ? { borderColor: 'rgba(255,83,112,0.3)', color: 'var(--red)' } : {}}>
+                {m.text}
+              </div>
+            ))}
+            {loading && (
+              <div className="chat-msg ai" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Spinner size={16} />
+                <span style={{ color: 'var(--text-muted)' }}>Thinking…</span>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Input */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <input
+              className="form-input"
+              placeholder={status?.available ? 'Ask about your spending…' : 'Ollama not connected'}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendMessage()}
+              disabled={!status?.available || loading}
+              style={{ flex: 1 }}
+            />
+            <button
+              className="btn btn-primary btn-icon"
+              onClick={() => sendMessage()}
+              disabled={!status?.available || loading || !input.trim()}
+            >
+              <Send size={15} />
+            </button>
+          </div>
+        </div>
+
+        {/* Suggested prompts */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="card">
+            <h3 className="section-title" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Sparkles size={15} color="var(--accent)" /> Suggested Questions
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {SUGGESTIONS.map((s, i) => (
+                <button
+                  key={i}
+                  className="btn btn-ghost"
+                  style={{ justifyContent: 'flex-start', textAlign: 'left', fontSize: 13 }}
+                  onClick={() => sendMessage(s)}
+                  disabled={!status?.available || loading}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="card">
+            <h3 className="section-title" style={{ marginBottom: 8 }}>How it works</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+              FinTrack sends an <strong>aggregated summary</strong> of your financial data
+              (not raw transactions) to your local Ollama model. No data leaves your machine.
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, marginTop: 8 }}>
+              Configure the model URL and name in <strong>Settings</strong>.
+              Default: <code style={{ background: 'var(--bg-input)', padding: '2px 6px', borderRadius: 4, fontSize: 11 }}>llama3 @ localhost:11434</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
