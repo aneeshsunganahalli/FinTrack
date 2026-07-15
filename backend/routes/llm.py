@@ -5,7 +5,7 @@ from sqlalchemy import func
 from datetime import date
 from calendar import monthrange
 
-from backend.models import get_db, Transaction, BankAccount, StockInvestment, Settings
+from backend.models import get_db, Transaction, BankAccount, StockInvestment, WishlistItem, Settings
 from backend.models.database import TransactionType
 from backend.models.schemas import LLMChatRequest, LLMChatResponse
 from backend.services.llm_client import get_llm_client
@@ -51,8 +51,15 @@ def _build_finance_context(db: Session) -> str:
         .all()
     )
 
+    # ── Investments details ──────────────────────────────────────────────────
     total_invested = db.query(func.coalesce(func.sum(StockInvestment.amount_invested), 0.0)).scalar()
     total_current = db.query(func.coalesce(func.sum(StockInvestment.current_value), 0.0)).scalar()
+
+    investments = db.query(StockInvestment).order_by(StockInvestment.amount_invested.desc()).all()
+
+    # ── Wishlist details ─────────────────────────────────────────────────────
+    wishlist_items = db.query(WishlistItem).filter_by(purchased=False).order_by(WishlistItem.added_at.desc()).all()
+    wishlist_total = sum(i.price or 0 for i in wishlist_items)
 
     lines = [
         f"Financial summary as of {today.isoformat()}:",
@@ -60,14 +67,40 @@ def _build_finance_context(db: Session) -> str:
         f"- This month's income: ₹{this_income:,.2f}",
         f"- This month's expenses: ₹{this_spend:,.2f}",
         f"- Net this month: ₹{(this_income - this_spend):,.2f}",
-        f"- Total invested: ₹{total_invested:,.2f}",
-        f"- Current portfolio value: ₹{total_current:,.2f}",
-        f"- Portfolio gain/loss: ₹{(total_current - total_invested):,.2f}",
         "",
         "Top spending categories this month:",
     ]
     for r in cat_rows:
         lines.append(f"  - {r.category or 'Uncategorized'}: ₹{r.total:,.2f}")
+
+    # Investment details
+    lines.append("")
+    lines.append("Investment Portfolio:")
+    lines.append(f"- Total invested: ₹{total_invested:,.2f}")
+    lines.append(f"- Current portfolio value: ₹{total_current:,.2f}")
+    lines.append(f"- Portfolio gain/loss: ₹{(total_current - total_invested):,.2f}")
+    if investments:
+        lines.append("")
+        lines.append("Individual investments:")
+        for inv in investments:
+            cv = inv.current_value or 0
+            pnl = cv - inv.amount_invested
+            pnl_str = f"+₹{pnl:,.2f}" if pnl >= 0 else f"-₹{abs(pnl):,.2f}"
+            platform_str = f" ({inv.platform})" if inv.platform else ""
+            lines.append(f"  - {inv.instrument_name}{platform_str}: invested ₹{inv.amount_invested:,.2f}, current ₹{cv:,.2f}, P&L {pnl_str}")
+
+    # Wishlist details
+    lines.append("")
+    lines.append("Wishlist:")
+    lines.append(f"- Active wishlist items: {len(wishlist_items)}")
+    lines.append(f"- Total wishlist value: ₹{wishlist_total:,.2f}")
+    if wishlist_items:
+        lines.append("")
+        lines.append("Wishlist items:")
+        for item in wishlist_items[:15]:  # cap at 15 items to avoid overwhelming context
+            price_str = f"₹{item.price:,.2f}" if item.price else "no price"
+            priority_str = f" [{item.priority.value}]" if item.priority else ""
+            lines.append(f"  - {item.name}: {price_str}{priority_str}")
 
     lines.append("\nPlease act as a helpful personal finance advisor and answer the user's question.")
     return "\n".join(lines)

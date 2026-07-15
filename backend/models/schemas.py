@@ -95,6 +95,10 @@ class TransactionOut(BaseModel):
         from_attributes = True
 
 
+class TransactionBulkCreate(BaseModel):
+    transactions: List[TransactionCreate]
+
+
 # ─── Wishlist Schemas ─────────────────────────────────────────────────────────
 
 class WishlistCreate(BaseModel):

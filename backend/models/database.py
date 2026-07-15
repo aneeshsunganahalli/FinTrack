@@ -170,6 +170,7 @@ def _seed_defaults():
             "ollama_model": "llama3",
             "currency": "INR",
             "currency_symbol": "₹",
+            "default_account_id": "",
         }
         for k, v in defaults.items():
             if not db.query(Settings).filter_by(key=k).first():

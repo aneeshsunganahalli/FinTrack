@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { getSettings, saveSettings, getCategories, createCategory, updateCategory, deleteCategory } from '../lib/api';
+import { getSettings, saveSettings, getCategories, createCategory, updateCategory, deleteCategory, getAccounts } from '../lib/api';
 import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
 import { useToast } from '../components/Toast';
@@ -13,6 +13,7 @@ export default function Settings() {
   const [settings, setSettings] = useState({});
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [accounts, setAccounts] = useState([]);
   const [catModal, setCatModal] = useState(null);
   const [catForm, setCatForm] = useState({ name: '', icon: 'tag', color: '#00D09C' });
   const toast = useToast();
@@ -24,6 +25,7 @@ export default function Settings() {
       setSettings(s);
     });
     loadCategories();
+    getAccounts().then(r => setAccounts(r.data));
   }, []);
 
   function loadCategories() {
@@ -94,6 +96,22 @@ export default function Settings() {
                 <label className="form-label">Currency Code</label>
                 <input className="form-input" value={settings.currency || 'INR'} onChange={e => setSettings(s => ({ ...s, currency: e.target.value }))} />
               </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Default Bank Account</label>
+              <select
+                className="form-select"
+                value={settings.default_account_id || ''}
+                onChange={e => setSettings(s => ({ ...s, default_account_id: e.target.value }))}
+              >
+                <option value="">— No default —</option>
+                {accounts.map(a => (
+                  <option key={a.id} value={String(a.id)}>{a.name} ({a.bank_name || a.account_type})</option>
+                ))}
+              </select>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                Pre-selects this account when adding new transactions
+              </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button type="submit" className="btn btn-primary" disabled={saving}>

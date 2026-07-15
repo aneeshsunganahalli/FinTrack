@@ -12,6 +12,7 @@ export const getAnalytics = (params) => api.get('/dashboard/analytics', { params
 // ─── Transactions ─────────────────────────────────────────────────────────────
 export const getTransactions = (params) => api.get('/transactions', { params });
 export const createTransaction = (data) => api.post('/transactions', data);
+export const createTransactionsBulk = (transactions) => api.post('/transactions/bulk', { transactions });
 export const updateTransaction = (id, data) => api.patch(`/transactions/${id}`, data);
 export const deleteTransaction = (id) => api.delete(`/transactions/${id}`);
 

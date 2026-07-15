@@ -1,27 +1,61 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Search, Filter, X } from 'lucide-react';
-import { getTransactions, createTransaction, updateTransaction, deleteTransaction, getCategories, getAccounts } from '../lib/api';
+import { Plus, Pencil, Trash2, Search, Filter, X, Layers, ChevronDown, ChevronUp } from 'lucide-react';
+import { getTransactions, createTransaction, createTransactionsBulk, updateTransaction, deleteTransaction, getCategories, getAccounts, getSettings } from '../lib/api';
 import { fmt, fmtDate } from '../lib/utils';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 import { useToast } from '../components/Toast';
 
-const EMPTY_FORM = {
-  date: new Date().toISOString().slice(0, 10),
-  amount: '',
-  type: 'expense',
-  category: '',
-  account: '',
-  note: '',
-  subcategory: '',
-};
+function makeEmptyRow(defaults = {}) {
+  return {
+    _key: Math.random().toString(36).slice(2),
+    date: new Date().toISOString().slice(0, 10),
+    amount: '',
+    type: 'expense',
+    category: '',
+    account_id: defaults.account_id || '',
+    account: defaults.account || '',
+    note: '',
+    subcategory: '',
+  };
+}
 
-function TransactionForm({ initial, categories, accounts, onSave, onClose }) {
-  const [form, setForm] = useState({ ...EMPTY_FORM, ...initial });
+function TransactionForm({ initial, categories, accounts, defaultAccountId, onSave, onClose }) {
+  const resolvedInitial = { ...initial };
+
+  // Apply default account for new transactions
+  if (!initial?.id && defaultAccountId && !resolvedInitial.account_id) {
+    const defAcc = accounts.find(a => String(a.id) === String(defaultAccountId));
+    if (defAcc) {
+      resolvedInitial.account_id = defAcc.id;
+      resolvedInitial.account = defAcc.name;
+    }
+  }
+
+  const [form, setForm] = useState({
+    date: new Date().toISOString().slice(0, 10),
+    amount: '',
+    type: 'expense',
+    category: '',
+    account_id: '',
+    account: '',
+    note: '',
+    subcategory: '',
+    ...resolvedInitial,
+  });
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  function handleAccountChange(accountId) {
+    const acc = accounts.find(a => String(a.id) === String(accountId));
+    setForm(f => ({
+      ...f,
+      account_id: accountId ? parseInt(accountId) : '',
+      account: acc ? acc.name : '',
+    }));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -67,9 +101,9 @@ function TransactionForm({ initial, categories, accounts, onSave, onClose }) {
         </div>
         <div className="form-group">
           <label className="form-label">Account</label>
-          <select className="form-select" value={form.account} onChange={e => set('account', e.target.value)}>
+          <select className="form-select" value={form.account_id || ''} onChange={e => handleAccountChange(e.target.value)}>
             <option value="">— Select —</option>
-            {accounts.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
+            {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
         </div>
       </div>
@@ -88,6 +122,169 @@ function TransactionForm({ initial, categories, accounts, onSave, onClose }) {
   );
 }
 
+
+function BulkEntryPanel({ categories, accounts, defaultAccountId, onDone }) {
+  const toast = useToast();
+  const [submitting, setSubmitting] = useState(false);
+
+  // Build default account info once
+  const defAcc = defaultAccountId ? accounts.find(a => String(a.id) === String(defaultAccountId)) : null;
+  const rowDefaults = defAcc ? { account_id: defAcc.id, account: defAcc.name } : {};
+
+  const [rows, setRows] = useState([makeEmptyRow(rowDefaults), makeEmptyRow(rowDefaults), makeEmptyRow(rowDefaults)]);
+
+  function updateRow(key, field, value) {
+    setRows(prev => prev.map(r => {
+      if (r._key !== key) return r;
+      if (field === 'account_id') {
+        const acc = accounts.find(a => String(a.id) === String(value));
+        return { ...r, account_id: value ? parseInt(value) : '', account: acc ? acc.name : '' };
+      }
+      return { ...r, [field]: value };
+    }));
+  }
+
+  function addRow() {
+    setRows(prev => [...prev, makeEmptyRow(rowDefaults)]);
+  }
+
+  function removeRow(key) {
+    setRows(prev => prev.length <= 1 ? prev : prev.filter(r => r._key !== key));
+  }
+
+  async function handleSubmitAll() {
+    const valid = rows.filter(r => r.amount && r.date);
+    if (valid.length === 0) {
+      toast('Add at least one row with date and amount', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const txs = valid.map(r => ({
+        date: r.date,
+        amount: parseFloat(r.amount),
+        type: r.type,
+        category: r.category || null,
+        account_id: r.account_id || null,
+        account: r.account || null,
+        note: r.note || null,
+        subcategory: null,
+      }));
+      await createTransactionsBulk(txs);
+      toast(`${txs.length} transaction${txs.length > 1 ? 's' : ''} added!`);
+      // Reset with fresh rows
+      setRows([makeEmptyRow(rowDefaults), makeEmptyRow(rowDefaults), makeEmptyRow(rowDefaults)]);
+      onDone();
+    } catch {
+      toast('Failed to save transactions', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="card" style={{ marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h3 className="section-title" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Layers size={16} /> Quick Add — Bulk Entry
+        </h3>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+          {rows.filter(r => r.amount && r.date).length} / {rows.length} rows filled
+        </span>
+      </div>
+
+      {/* Header row */}
+      <div className="bulk-grid bulk-header">
+        <span>Date</span>
+        <span>Amount</span>
+        <span>Type</span>
+        <span>Category</span>
+        <span>Account</span>
+        <span>Note</span>
+        <span></span>
+      </div>
+
+      {/* Data rows */}
+      {rows.map(row => (
+        <div key={row._key} className="bulk-grid bulk-row">
+          <input
+            type="date"
+            className="form-input"
+            value={row.date}
+            onChange={e => updateRow(row._key, 'date', e.target.value)}
+          />
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            className="form-input"
+            placeholder="0.00"
+            value={row.amount}
+            onChange={e => updateRow(row._key, 'amount', e.target.value)}
+          />
+          <select
+            className="form-select"
+            value={row.type}
+            onChange={e => updateRow(row._key, 'type', e.target.value)}
+          >
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+          <select
+            className="form-select"
+            value={row.category}
+            onChange={e => updateRow(row._key, 'category', e.target.value)}
+          >
+            <option value="">—</option>
+            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+          </select>
+          <select
+            className="form-select"
+            value={row.account_id || ''}
+            onChange={e => updateRow(row._key, 'account_id', e.target.value)}
+          >
+            <option value="">—</option>
+            {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Note..."
+            value={row.note}
+            onChange={e => updateRow(row._key, 'note', e.target.value)}
+          />
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon btn-sm"
+            onClick={() => removeRow(row._key)}
+            title="Remove row"
+            style={{ opacity: rows.length <= 1 ? 0.3 : 1 }}
+            disabled={rows.length <= 1}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      ))}
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 14, justifyContent: 'space-between' }}>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={addRow}>
+          <Plus size={14} /> Add Row
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={handleSubmitAll}
+          disabled={submitting || rows.filter(r => r.amount && r.date).length === 0}
+        >
+          {submitting ? <Spinner size={16} /> : null}
+          Submit All ({rows.filter(r => r.amount && r.date).length})
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 export default function Transactions() {
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -96,6 +293,8 @@ export default function Transactions() {
   const [modal, setModal] = useState(null); // null | 'add' | tx object
   const [filters, setFilters] = useState({ search: '', type: '', category: '', date_from: '', date_to: '' });
   const [showFilters, setShowFilters] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
+  const [defaultAccountId, setDefaultAccountId] = useState('');
   const toast = useToast();
 
   const load = useCallback(async () => {
@@ -106,14 +305,20 @@ export default function Transactions() {
       if (filters.category) params.category = filters.category;
       if (filters.date_from) params.date_from = filters.date_from;
       if (filters.date_to) params.date_to = filters.date_to;
-      const [txRes, catRes, accRes] = await Promise.all([
+      const [txRes, catRes, accRes, settingsRes] = await Promise.all([
         getTransactions(params),
         getCategories(),
         getAccounts(),
+        getSettings(),
       ]);
       setTransactions(txRes.data);
       setCategories(catRes.data);
       setAccounts(accRes.data);
+
+      // Resolve default account from settings
+      const settingsMap = {};
+      settingsRes.data.forEach(({ key, value }) => { settingsMap[key] = value; });
+      setDefaultAccountId(settingsMap.default_account_id || '');
     } finally {
       setLoading(false);
     }
@@ -162,11 +367,28 @@ export default function Transactions() {
           <button className="btn btn-ghost" onClick={() => setShowFilters(!showFilters)}>
             <Filter size={15} /> Filters
           </button>
+          <button
+            className={`btn ${showBulk ? 'btn-accent' : 'btn-ghost'}`}
+            onClick={() => setShowBulk(!showBulk)}
+            style={showBulk ? { background: 'var(--accent-glow)', borderColor: 'var(--accent-border)' } : {}}
+          >
+            <Layers size={15} /> Bulk Add
+          </button>
           <button className="btn btn-primary" onClick={() => setModal('add')}>
             <Plus size={15} /> Add Transaction
           </button>
         </div>
       </div>
+
+      {/* Bulk Entry Panel */}
+      {showBulk && (
+        <BulkEntryPanel
+          categories={categories}
+          accounts={accounts}
+          defaultAccountId={defaultAccountId}
+          onDone={load}
+        />
+      )}
 
       {/* Filters */}
       {showFilters && (
@@ -275,6 +497,7 @@ export default function Transactions() {
             initial={modal === 'add' ? {} : modal}
             categories={categories}
             accounts={accounts}
+            defaultAccountId={defaultAccountId}
             onSave={handleSave}
             onClose={() => setModal(null)}
           />

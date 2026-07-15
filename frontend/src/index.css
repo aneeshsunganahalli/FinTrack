@@ -637,3 +637,103 @@ tr:hover .row-actions { opacity: 1; }
 .recent-tx-item:last-child { border-bottom: none; }
 
 .recent-tx-item:hover { background: rgba(255,255,255,0.02); }
+
+/* ── Bulk entry grid ────────────────────────────────────────── */
+.bulk-grid {
+  display: grid;
+  grid-template-columns: 140px 100px 100px 1fr 1fr 1fr 36px;
+  gap: 8px;
+  align-items: center;
+}
+
+.bulk-header {
+  padding: 8px 0 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+
+.bulk-header span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.bulk-row {
+  padding: 4px 0;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.bulk-row:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+.bulk-row .form-input,
+.bulk-row .form-select {
+  padding: 7px 10px;
+  font-size: 12px;
+  min-height: unset;
+}
+
+/* ── Savings calculator ─────────────────────────────────────── */
+.savings-calc-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 24px;
+  margin-top: 24px;
+}
+
+.savings-calc-result {
+  font-family: 'Merriweather', serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.savings-calc-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.savings-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-input);
+  border-radius: 8px;
+  gap: 12px;
+}
+
+.savings-item-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+
+.savings-item-row label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.savings-item-price {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-light);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+

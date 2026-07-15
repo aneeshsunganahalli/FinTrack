@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Plus, Trash2, CheckCircle, ExternalLink, Pencil, ShoppingBag } from 'lucide-react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Plus, Trash2, CheckCircle, ExternalLink, Pencil, ShoppingBag, Calculator, Target } from 'lucide-react';
 import { getWishlist, createWishlistItem, updateWishlistItem, deleteWishlistItem, previewUrl } from '../lib/api';
 import { fmt } from '../lib/utils';
 import Modal from '../components/Modal';
@@ -138,6 +138,145 @@ function WishCard({ item, onEdit, onDelete, onToggle }) {
   );
 }
 
+
+function SavingsCalculator({ items }) {
+  const [months, setMonths] = useState(6);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [selectAll, setSelectAll] = useState(true);
+
+  // Items with a price
+  const pricedItems = useMemo(() => items.filter(i => i.price && i.price > 0), [items]);
+
+  // Toggle select all
+  function handleSelectAll(checked) {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedIds(new Set());
+    }
+  }
+
+  function handleToggleItem(id) {
+    if (selectAll) {
+      // Switch to manual mode with all items except this one
+      const allIds = new Set(pricedItems.map(i => i.id));
+      allIds.delete(id);
+      setSelectAll(false);
+      setSelectedIds(allIds);
+    } else {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    }
+  }
+
+  const activeItems = selectAll
+    ? pricedItems
+    : pricedItems.filter(i => selectedIds.has(i.id));
+
+  const totalCost = activeItems.reduce((s, i) => s + (i.price || 0), 0);
+  const monthlySavings = months > 0 ? totalCost / months : 0;
+
+  if (pricedItems.length === 0) return null;
+
+  return (
+    <div className="savings-calc-card">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <div style={{ padding: 8, background: 'var(--accent-glow)', borderRadius: 8, border: '1px solid var(--accent-border)', display: 'flex' }}>
+          <Target size={18} color="var(--accent)" />
+        </div>
+        <div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Savings Goal Calculator</h3>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>How much to save monthly to buy your wishlist</p>
+        </div>
+      </div>
+
+      {/* Months input */}
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', marginBottom: 20 }}>
+        <div className="form-group" style={{ flex: '0 0 160px', marginBottom: 0 }}>
+          <label className="form-label">Save over</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="number"
+              min="1"
+              max="120"
+              className="form-input"
+              value={months}
+              onChange={e => setMonths(Math.max(1, parseInt(e.target.value) || 1))}
+              style={{ width: 80 }}
+            />
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>months</span>
+          </div>
+        </div>
+        <div style={{ flex: 1, textAlign: 'right' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>
+            Monthly savings needed
+          </div>
+          <div className="savings-calc-result">
+            {fmt(monthlySavings)}
+            <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 4 }}>/mo</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+        <div style={{ flex: 1, padding: '12px 16px', background: 'var(--bg-input)', borderRadius: 10, border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Selected Items</div>
+          <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>{activeItems.length}</div>
+        </div>
+        <div style={{ flex: 1, padding: '12px 16px', background: 'var(--bg-input)', borderRadius: 10, border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Total Cost</div>
+          <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4, color: 'var(--accent-light)' }}>{fmt(totalCost)}</div>
+        </div>
+        <div style={{ flex: 1, padding: '12px 16px', background: 'var(--bg-input)', borderRadius: 10, border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px' }}>Weekly</div>
+          <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>{fmt(monthlySavings / 4.33)}</div>
+        </div>
+      </div>
+
+      {/* Item selection */}
+      <div className="savings-calc-breakdown">
+        <div className="savings-item-row" style={{ background: 'transparent', padding: '4px 12px' }}>
+          <label style={{ fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              checked={selectAll}
+              onChange={e => handleSelectAll(e.target.checked)}
+              style={{ accentColor: 'var(--accent)' }}
+            />
+            <span>Select All</span>
+          </label>
+          <span className="savings-item-price" style={{ color: 'var(--text-muted)' }}>{fmt(pricedItems.reduce((s, i) => s + i.price, 0))}</span>
+        </div>
+        {pricedItems.map(item => {
+          const isChecked = selectAll || selectedIds.has(item.id);
+          return (
+            <div key={item.id} className="savings-item-row">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => handleToggleItem(item.id)}
+                  style={{ accentColor: 'var(--accent)' }}
+                />
+                <span>{item.name}</span>
+                {item.priority === 'high' && (
+                  <span className="badge badge-high" style={{ fontSize: 9, padding: '1px 6px' }}>high</span>
+                )}
+              </label>
+              <span className="savings-item-price">{fmt(item.price)}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
 export default function Wishlist() {
   const [items, setItems] = useState([]);
   const [purchased, setPurchased] = useState([]);
@@ -216,6 +355,11 @@ export default function Wishlist() {
             <WishCard key={item.id} item={item} onEdit={setModal} onDelete={handleDelete} onToggle={handleToggle} />
           ))}
         </div>
+      )}
+
+      {/* Savings Calculator — shown on Active tab when there are items with prices */}
+      {tab === 'active' && !loading && items.length > 0 && (
+        <SavingsCalculator items={items} />
       )}
 
       {modal && (
