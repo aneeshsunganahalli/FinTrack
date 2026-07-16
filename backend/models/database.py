@@ -203,6 +203,7 @@ def _seed_defaults():
             "currency": "INR",
             "currency_symbol": "₹",
             "default_account_id": "",
+            "twelvedata_api_key": "",
         }
         for k, v in defaults.items():
             if not db.query(Settings).filter_by(key=k).first():

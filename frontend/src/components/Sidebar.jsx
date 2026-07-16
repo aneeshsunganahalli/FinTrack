@@ -5,16 +5,16 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/',            icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/transactions',icon: ArrowLeftRight,  label: 'Transactions' },
-  { to: '/accounts',    icon: Building2,       label: 'Bank Accounts' },
-  { to: '/subscriptions', icon: Repeat,        label: 'Subscriptions' },
-  { to: '/wishlist',    icon: Heart,           label: 'Wishlist' },
-  { to: '/investments', icon: TrendingUp,      label: 'Investments' },
-  { to: '/analytics',   icon: BarChart2,       label: 'Analytics' },
-  { to: '/import',      icon: Upload,          label: 'Import / Export' },
-  { to: '/ai',          icon: Bot,             label: 'AI Insights' },
-  { to: '/settings',    icon: Settings,        label: 'Settings' },
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
+  { to: '/accounts', icon: Building2, label: 'Bank Accounts' },
+  { to: '/subscriptions', icon: Repeat, label: 'Subscriptions' },
+  { to: '/wishlist', icon: Heart, label: 'Wishlist' },
+  { to: '/investments', icon: TrendingUp, label: 'Investments' },
+  { to: '/analytics', icon: BarChart2, label: 'Analytics' },
+  { to: '/import', icon: Upload, label: 'Import / Export' },
+  { to: '/ai', icon: Bot, label: 'AI Insights' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function Sidebar() {
@@ -24,7 +24,7 @@ export default function Sidebar() {
         <div className="logo-icon">
           <Wallet size={17} color="#fff" strokeWidth={2.5} />
         </div>
-        <span>FinTrack</span>
+        <span>Jarvis</span>
       </div>
 
       <div className="sidebar-section">

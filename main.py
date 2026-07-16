@@ -30,10 +30,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import asyncio
+from backend.models import init_db, SessionLocal
+from backend.routes.subscriptions import process_due_subscriptions
+from backend.routes.investments import refresh_investment_prices
+
+async def background_worker():
+    while True:
+        try:
+            db = SessionLocal()
+            try:
+                process_due_subscriptions(db)
+                refresh_investment_prices(db)
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"Background worker error: {e}")
+        # Run every 12 hours
+        await asyncio.sleep(12 * 3600)
+
 # ─── Init DB on startup ───────────────────────────────────────────────────────
 @app.on_event("startup")
 def on_startup():
     init_db()
+    asyncio.create_task(background_worker())
 
 
 # ─── API routes ───────────────────────────────────────────────────────────────

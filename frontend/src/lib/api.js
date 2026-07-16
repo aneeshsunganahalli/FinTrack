@@ -34,6 +34,8 @@ export const getInvestments = () => api.get('/investments');
 export const createInvestment = (data) => api.post('/investments', data);
 export const updateInvestment = (id, data) => api.patch(`/investments/${id}`, data);
 export const deleteInvestment = (id) => api.delete(`/investments/${id}`);
+export const searchInvestments = (q) => api.get('/investments/search', { params: { q } });
+export const refreshInvestmentPrices = () => api.post('/investments/refresh-prices');
 
 // ─── Subscriptions ────────────────────────────────────────────────────────────
 export const getSubscriptions = () => api.get('/subscriptions');

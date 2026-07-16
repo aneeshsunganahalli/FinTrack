@@ -56,6 +56,9 @@ def list_transactions(
     q = db.query(Transaction)
     if category:
         q = q.filter(Transaction.category == category)
+    else:
+        # Exclude Investments category by default
+        q = q.filter((Transaction.category != "Investments") | (Transaction.category == None))
     if account_id:
         q = q.filter(Transaction.account_id == account_id)
     if type:

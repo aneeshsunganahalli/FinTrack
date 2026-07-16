@@ -5,8 +5,36 @@ from typing import List
 
 from backend.models import get_db, StockInvestment
 from backend.models.schemas import StockCreate, StockUpdate, StockOut
+from backend.services.twelvedata import TwelveDataService
 
 router = APIRouter(prefix="/api/investments", tags=["investments"])
+
+
+@router.get("/search")
+def search_stock_symbols(q: str = ""):
+    return TwelveDataService.search_symbols(q)
+
+
+@router.post("/refresh-prices")
+def refresh_investment_prices(db: Session = Depends(get_db)):
+    investments = db.query(StockInvestment).all()
+    symbols = [inv.instrument_name for inv in investments if inv.instrument_name]
+    
+    if not symbols:
+        return {"status": "no symbols to update"}
+        
+    prices = TwelveDataService.get_live_prices(symbols)
+    updated_count = 0
+    
+    for inv in investments:
+        if inv.instrument_name in prices:
+            inv.current_value = inv.units * prices[inv.instrument_name] if inv.units else prices[inv.instrument_name]
+            updated_count += 1
+            
+    if updated_count > 0:
+        db.commit()
+        
+    return {"status": "ok", "updated": updated_count}
 
 
 @router.get("", response_model=List[StockOut])

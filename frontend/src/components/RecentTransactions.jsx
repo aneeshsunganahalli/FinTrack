@@ -4,13 +4,14 @@ import { getTransactions } from '../lib/api';
 import { fmt, fmtDate } from '../lib/utils';
 import Spinner from './Spinner';
 
-export default function RecentTransactions({ limit = 5, accountId = null, title = 'Recent Transactions', compact = false }) {
+export default function RecentTransactions({ limit = 5, accountId = null, category = null, title = 'Recent Transactions', compact = false }) {
   const [txs, setTxs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const params = { limit };
     if (accountId) params.account_id = accountId;
+    if (category) params.category = category;
     getTransactions(params)
       .then(r => setTxs(r.data.slice(0, limit)))
       .finally(() => setLoading(false));

@@ -1,20 +1,37 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { getInvestments, createInvestment, updateInvestment, deleteInvestment } from '../lib/api';
+import { getInvestments, createInvestment, updateInvestment, deleteInvestment, searchInvestments, refreshInvestmentPrices } from '../lib/api';
 import { fmt, fmtDate } from '../lib/utils';
 import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 import RecentTransactions from '../components/RecentTransactions';
 import { useToast } from '../components/Toast';
 
-const EMPTY = { platform: '', instrument_name: '', amount_invested: '', units: '', date_invested: '', current_value: '', notes: '' };
+const EMPTY = { platform: 'Groww', instrument_name: '', amount_invested: '', units: '', date_invested: '', current_value: '', notes: '' };
 
 function InvestmentForm({ initial, onSave, onClose }) {
   const [form, setForm] = useState({ ...EMPTY, ...initial });
   const [saving, setSaving] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const toast = useToast();
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (form.instrument_name.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSearching(true);
+      searchInvestments(form.instrument_name)
+        .then(r => setSearchResults(r.data))
+        .catch(() => setSearchResults([]))
+        .finally(() => setSearching(false));
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [form.instrument_name]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -38,9 +55,18 @@ function InvestmentForm({ initial, onSave, onClose }) {
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="grid-2">
-        <div className="form-group">
+        <div className="form-group" style={{ position: 'relative' }}>
           <label className="form-label">Instrument Name</label>
-          <input className="form-input" placeholder="e.g. Nifty 50 Index" value={form.instrument_name} onChange={e => set('instrument_name', e.target.value)} required />
+          <input className="form-input" placeholder="e.g. AAPL or Nifty" value={form.instrument_name} onChange={e => set('instrument_name', e.target.value)} required />
+          {searchResults.length > 0 && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-card)', border: '1px solid var(--border)', zIndex: 10, borderRadius: 4, maxHeight: 150, overflowY: 'auto' }}>
+              {searchResults.map(res => (
+                <div key={`${res.symbol}-${res.exchange}`} style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 13, borderBottom: '1px solid var(--border)' }} onClick={() => { set('instrument_name', res.symbol); setSearchResults([]); }}>
+                  {res.symbol} - {res.instrument_name} ({res.exchange})
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="form-group">
           <label className="form-label">Platform / Broker</label>
@@ -110,6 +136,18 @@ export default function Investments() {
     load();
   }
 
+  async function handleRefresh() {
+    setLoading(true);
+    try {
+      await refreshInvestmentPrices();
+      toast('Prices updated!');
+      load();
+    } catch {
+      toast('Failed to refresh prices', 'error');
+      setLoading(false);
+    }
+  }
+
   const totalInvested = investments.reduce((s, i) => s + i.amount_invested, 0);
   const totalCurrent = investments.reduce((s, i) => s + (i.current_value || i.amount_invested), 0);
   const gainLoss = totalCurrent - totalInvested;
@@ -128,9 +166,14 @@ export default function Investments() {
           <h1 className="page-title">Investments</h1>
           <p className="page-subtitle">{investments.length} holdings</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setModal('add')}>
-          <Plus size={15} /> Add Investment
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-ghost" onClick={handleRefresh} disabled={loading}>
+            Refresh Prices
+          </button>
+          <button className="btn btn-primary" onClick={() => setModal('add')}>
+            <Plus size={15} /> Add Investment
+          </button>
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -227,6 +270,7 @@ export default function Investments() {
           <RecentTransactions
             limit={7}
             title="Recent Investment Transactions"
+            category="Investments"
           />
           <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 12, lineHeight: 1.5, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
             Showing all recent transactions · Filter by category in Transactions

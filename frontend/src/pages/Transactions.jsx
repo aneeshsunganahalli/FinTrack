@@ -66,7 +66,14 @@ function TransactionForm({ initial, categories, accounts, defaultAccountId, onSa
     if (!form.amount || !form.date) return;
     setSaving(true);
     try {
-      await onSave({ ...form, amount: parseFloat(form.amount) });
+      const payload = { ...form, amount: parseFloat(form.amount) };
+      // Convert empty strings to null to satisfy Pydantic validation for Optional fields
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === '') {
+          payload[key] = null;
+        }
+      });
+      await onSave(payload);
       toast('Transaction saved!');
       onClose();
     } catch {

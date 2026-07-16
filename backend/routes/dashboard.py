@@ -42,6 +42,7 @@ def get_dashboard(db: Session = Depends(get_db)):
             db.query(func.coalesce(func.sum(Transaction.amount), 0.0))
             .filter(
                 Transaction.type == TransactionType.expense,
+                (Transaction.category != "Investments") | (Transaction.category == None),
                 Transaction.date >= start,
                 Transaction.date <= end,
             )
@@ -66,6 +67,7 @@ def get_dashboard(db: Session = Depends(get_db)):
         db.query(Transaction.category, func.sum(Transaction.amount).label("total"))
         .filter(
             Transaction.type == TransactionType.expense,
+            (Transaction.category != "Investments") | (Transaction.category == None),
             Transaction.date >= this_start,
             Transaction.date <= this_end,
         )
@@ -149,6 +151,7 @@ def get_analytics(
         db.query(Transaction.category, func.sum(Transaction.amount).label("total"))
         .filter(
             Transaction.type == TransactionType.expense,
+            (Transaction.category != "Investments") | (Transaction.category == None),
             Transaction.date >= d_from,
             Transaction.date <= d_to,
         )
