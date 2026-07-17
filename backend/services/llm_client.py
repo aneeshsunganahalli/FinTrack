@@ -16,10 +16,10 @@ class LLMClient:
     async def check_availability(self) -> bool:
         """Ping Ollama to see if it's running."""
         try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
+            async with httpx.AsyncClient(timeout=1.5) as client:
                 r = await client.get(f"{self.base_url}/api/tags")
                 self._available = r.status_code == 200
-        except Exception:
+        except (httpx.TimeoutException, httpx.ConnectError):
             self._available = False
         return self._available
 
@@ -31,10 +31,10 @@ class LLMClient:
         available = await self.check_availability()
         if not available:
             return {
-                "response": "",
+                "response": "Mac is asleep or unreachable. Fallback response active.",
                 "available": False,
                 "model": self.model,
-                "error": "Ollama not detected. Start Ollama and configure the URL in Settings.",
+                "error": "Ollama not detected.",
             }
 
         full_prompt = f"{context}\n\nUser question: {prompt}" if context else prompt
@@ -56,10 +56,10 @@ class LLMClient:
                 }
         except httpx.TimeoutException:
             return {
-                "response": "",
-                "available": True,
+                "response": "Connection to Mac lost during generation.",
+                "available": False,
                 "model": self.model,
-                "error": f"The model '{self.model}' took too long to respond. Try a smaller model.",
+                "error": f"The model '{self.model}' took too long to respond.",
             }
         except Exception as e:
             return {

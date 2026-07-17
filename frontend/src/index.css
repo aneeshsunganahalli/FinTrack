@@ -35,6 +35,42 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
 }
 
+/* iOS Safe Areas & Dynamic Island */
+body {
+    /* Pad layout to avoid Dynamic Island (top) and Home Indicator (bottom) */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+
+    /* Prevent elastic browser bounce (overscroll) */
+    overscroll-behavior: none;
+    
+    /* Prevent accidental text selection while tapping UI elements */
+    user-select: none;
+    -webkit-user-select: none;
+    
+    /* Disable default gray tap highlight on iOS */
+    -webkit-tap-highlight-color: transparent;
+    
+    /* Ensure the body itself doesn't scroll if we have a scrollable chat area inside */
+    overflow: hidden;
+    height: 100dvh; /* Use dynamic viewport height for mobile browsers */
+}
+
+/* Scrollable Chat Container (iOS native feel) */
+.chat-container {
+    height: 100%;
+    overflow-y: auto;
+    
+    /* Enable native momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    
+    /* Allow text selection in chat messages */
+    user-select: text;
+    -webkit-user-select: text;
+}
+
 /* ── Scrollbar ─────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
