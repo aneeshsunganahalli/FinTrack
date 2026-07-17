@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { Bot, Send, Wifi, WifiOff, Sparkles } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { getLLMStatus, chatWithLLM } from '../lib/api';
 import Spinner from '../components/Spinner';
 
@@ -77,7 +80,7 @@ export default function AIInsights() {
         </div>
       )}
 
-      <div className="grid-2" style={{ alignItems: 'start', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '7fr 3fr', alignItems: 'start', gap: 24 }}>
         {/* Chat window */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <h3 className="section-title" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -91,11 +94,19 @@ export default function AIInsights() {
                 <span className="empty-text">Ask anything about your finances</span>
               </div>
             )}
-            {messages.map((m, i) => (
+            {messages.map((m, i) => {
+              const cleanText = m.text ? m.text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '') : '';
+              return (
               <div key={i} className={`chat-msg ${m.role}`} style={m.error ? { borderColor: 'rgba(255,83,112,0.3)', color: 'var(--red)' } : {}}>
-                {m.text}
+                {m.role === 'ai' && !m.error ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                    {cleanText}
+                  </ReactMarkdown>
+                ) : (
+                  cleanText
+                )}
               </div>
-            ))}
+            )})}
             {loading && (
               <div className="chat-msg ai" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Spinner size={16} />

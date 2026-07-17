@@ -103,6 +103,12 @@ def _build_finance_context(db: Session) -> str:
             lines.append(f"  - {item.name}: {price_str}{priority_str}")
 
     lines.append("\nPlease act as a helpful personal finance advisor and answer the user's question.")
+    lines.append("CRITICAL INSTRUCTION: You must NEVER use emojis under any circumstances.")
+    lines.append("Use Markdown extensively. Use headers (### or ####) for different font sizes to organize sections.")
+    lines.append("Use **bold** to emphasize important concepts, and *italics* for secondary nuances.")
+    lines.append("Crucially, apply colors directly to the text to highlight good and bad financial outcomes.")
+    lines.append("For positive financial outcomes, good decisions, or savings, wrap the text like this: <strong class=\"text-income\">the positive text here</strong>.")
+    lines.append("For negative outcomes, risks, bad decisions, or overspending, wrap the text like this: <strong class=\"text-expense\">the negative text here</strong>.")
     return "\n".join(lines)
 
 
