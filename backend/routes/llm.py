@@ -125,7 +125,8 @@ async def llm_chat(payload: LLMChatRequest, db: Session = Depends(get_db)):
 
     result = await client.chat(payload.message, context=context)
     return LLMChatResponse(
-        response=result.get("response", result.get("error", "No response")),
+        response=result.get("response") or result.get("error") or "No response",
         model=result.get("model"),
         available=result.get("available", False),
     )
+
