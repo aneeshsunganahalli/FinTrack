@@ -16,7 +16,7 @@ from backend.routes import (
 )
 
 app = FastAPI(
-    title="FinTrack",
+    title="Jarvis",
     description="Local Personal Finance Tracker",
     version="1.0.0",
 )
@@ -84,4 +84,4 @@ if os.path.isdir(FRONTEND_DIST):
 def root():
     if os.path.isdir(FRONTEND_DIST):
         return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
-    return {"message": "FinTrack API running. Start the Vite dev server for the UI."}
+    return {"message": "Jarvis API running. Start the Vite dev server for the UI."}
