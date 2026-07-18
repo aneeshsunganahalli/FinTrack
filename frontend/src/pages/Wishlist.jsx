@@ -3,6 +3,7 @@ import { Plus, Trash2, CheckCircle, ExternalLink, Pencil, ShoppingBag, Calculato
 import { getWishlist, createWishlistItem, updateWishlistItem, deleteWishlistItem, previewUrl } from '../lib/api';
 import { fmt } from '../lib/utils';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import Spinner from '../components/Spinner';
 import { useToast } from '../components/Toast';
 
@@ -283,6 +284,7 @@ export default function Wishlist() {
   const [tab, setTab] = useState('active');
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
   const toast = useToast();
 
   const load = useCallback(() => {
@@ -304,10 +306,16 @@ export default function Wishlist() {
   }
 
   async function handleDelete(item) {
-    if (!confirm(`Delete "${item.name}"?`)) return;
-    await deleteWishlistItem(item.id);
-    toast('Deleted');
-    load();
+    setConfirmModal({
+      title: 'Delete Item',
+      message: `Are you sure you want to delete "${item.name}" from your wishlist?`,
+      onConfirm: async () => {
+        await deleteWishlistItem(item.id);
+        toast('Deleted');
+        setConfirmModal(null);
+        load();
+      }
+    });
   }
 
   async function handleToggle(item) {
@@ -366,6 +374,18 @@ export default function Wishlist() {
         <Modal title={modal === 'add' ? 'Add Wishlist Item' : 'Edit Item'} onClose={() => setModal(null)}>
           <WishlistForm initial={modal === 'add' ? {} : modal} onSave={handleSave} onClose={() => setModal(null)} />
         </Modal>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+          danger={true}
+          confirmText="Delete"
+        />
       )}
     </div>
   );

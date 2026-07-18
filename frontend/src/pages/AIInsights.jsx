@@ -93,7 +93,7 @@ export default function AIInsights() {
                 <Sparkles size={36} style={{ opacity: 0.2, marginBottom: 12 }} />
                 <span className="empty-text" style={{ fontSize: 18, fontWeight: 600 }}>Jarvis AI</span>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Ask anything about your finances</span>
-                <div className="ai-welcome-chips">
+                <div className="ai-welcome-chips desktop-only">
                   {SUGGESTIONS.map((s, i) => (
                     <button
                       key={i}
@@ -152,7 +152,7 @@ export default function AIInsights() {
         </div>
 
         {/* Sidebar Info (desktop only) */}
-        <div className="ai-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="ai-sidebar desktop-only" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="card">
             <h3 className="section-title" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
               <Sparkles size={15} color="var(--accent)" /> Suggested Questions
@@ -171,7 +171,7 @@ export default function AIInsights() {
             </div>
           </div>
 
-          <div className="card">
+          <div className="card desktop-only">
             <h3 className="section-title" style={{ marginBottom: 8 }}>How it works</h3>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
               FinTrack sends an <strong>aggregated summary</strong> of your financial data

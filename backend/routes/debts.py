@@ -102,11 +102,11 @@ def mark_debt_paid(debt_id: int, db: Session = Depends(get_db)):
         acc = db.query(BankAccount).filter_by(id=debt.account_id).first()
         if acc:
             if debt.direction == DebtDirection.owed_to_me:
-                # Someone paid me back → income
+                # Someone paid me back → incoming transfer (marked as income to adjust balance easily)
                 tx_type = TransactionType.income
                 acc.current_balance += debt.amount
             else:
-                # I paid someone back → expense
+                # I paid someone back → outgoing transfer (marked as expense to adjust balance easily)
                 tx_type = TransactionType.expense
                 acc.current_balance -= debt.amount
 
@@ -114,7 +114,7 @@ def mark_debt_paid(debt_id: int, db: Session = Depends(get_db)):
                 date=today,
                 amount=debt.amount,
                 type=tx_type,
-                category="Debt Repayment",
+                category="Transfers",
                 account_id=debt.account_id,
                 account=acc.name,
                 note=f"IOU settled: {debt.person_name}",

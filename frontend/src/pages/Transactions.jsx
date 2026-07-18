@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, Search, Filter, X, Layers, ChevronDown, ChevronUp
 import { getTransactions, createTransaction, createTransactionsBulk, updateTransaction, deleteTransaction, getCategories, getAccounts, getSettings } from '../lib/api';
 import { fmt, fmtDate } from '../lib/utils';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import Spinner from '../components/Spinner';
 import { useToast } from '../components/Toast';
 
@@ -332,6 +333,7 @@ export default function Transactions() {
   const [showFilters, setShowFilters] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
   const [defaultAccountId, setDefaultAccountId] = useState('');
+  const [confirmModal, setConfirmModal] = useState(null);
   const toast = useToast();
 
   const load = useCallback(async () => {
@@ -373,14 +375,20 @@ export default function Transactions() {
   }
 
   async function handleDelete(tx) {
-    if (!confirm(`Delete this ${tx.type} of ${fmt(tx.amount)}?`)) return;
-    try {
-      await deleteTransaction(tx.id);
-      toast('Deleted!');
-      load();
-    } catch {
-      toast('Failed to delete', 'error');
-    }
+    setConfirmModal({
+      title: 'Delete Transaction',
+      message: `Are you sure you want to delete this ${tx.type} of ${fmt(tx.amount)}?`,
+      onConfirm: async () => {
+        try {
+          await deleteTransaction(tx.id);
+          toast('Deleted!');
+          setConfirmModal(null);
+          load();
+        } catch {
+          toast('Failed to delete', 'error');
+        }
+      }
+    });
   }
 
   const filtered = transactions.filter(tx => {
@@ -546,6 +554,18 @@ export default function Transactions() {
             onClose={() => setModal(null)}
           />
         </Modal>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+          danger={true}
+          confirmText="Delete"
+        />
       )}
     </div>
   );

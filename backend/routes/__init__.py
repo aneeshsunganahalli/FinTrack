@@ -9,3 +9,4 @@ from .import_export import router as import_router
 from .llm import router as llm_router
 from .subscriptions import router as subscriptions_router
 from .debts import router as debts_router
+from .mutual_funds import router as mutual_funds_router

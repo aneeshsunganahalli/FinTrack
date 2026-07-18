@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, Download, Upload, CheckCircle, XCircle, AlertTria
 import { getSettings, saveSettings, getCategories, createCategory, updateCategory, deleteCategory, getAccounts, previewTransactionsCSV, commitTransactionsCSV, commitAccountsCSV, commitInvestmentsCSV } from '../lib/api';
 import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../components/Toast';
 
 function ColorSwatch({ color }) {
@@ -134,6 +135,7 @@ export default function Settings() {
   const [categories, setCategories] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [catModal, setCatModal] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
   const [catForm, setCatForm] = useState({ name: '', icon: 'tag', color: '#00D09C' });
   const toast = useToast();
 
@@ -181,10 +183,16 @@ export default function Settings() {
   }
 
   async function handleDeleteCat(cat) {
-    if (!confirm(`Delete category "${cat.name}"?`)) return;
-    await deleteCategory(cat.id);
-    toast('Deleted');
-    loadCategories();
+    setConfirmModal({
+      title: 'Delete Category',
+      message: `Are you sure you want to delete category "${cat.name}"?`,
+      onConfirm: async () => {
+        await deleteCategory(cat.id);
+        toast('Deleted');
+        setConfirmModal(null);
+        loadCategories();
+      }
+    });
   }
 
   function openCatEdit(cat) {
@@ -375,6 +383,18 @@ export default function Settings() {
             </div>
           </form>
         </Modal>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+          danger={true}
+          confirmText="Delete"
+        />
       )}
     </div>
   );

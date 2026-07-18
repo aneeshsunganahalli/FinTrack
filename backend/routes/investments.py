@@ -3,9 +3,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from backend.models import get_db, StockInvestment
+from backend.models import get_db, StockInvestment, Transaction, BankAccount
+from backend.models.database import TransactionType
 from backend.models.schemas import StockCreate, StockUpdate, StockOut
 from backend.services.twelvedata import TwelveDataService
+from datetime import date
+from backend.routes.transactions import _adjust_balance
 
 router = APIRouter(prefix="/api/investments", tags=["investments"])
 
@@ -46,6 +49,22 @@ def list_investments(db: Session = Depends(get_db)):
 def create_investment(payload: StockCreate, db: Session = Depends(get_db)):
     inv = StockInvestment(**payload.dict())
     db.add(inv)
+    
+    if inv.account_id:
+        acc = db.query(BankAccount).filter_by(id=inv.account_id).first()
+        if acc:
+            tx = Transaction(
+                date=inv.date_invested or date.today(),
+                amount=inv.amount_invested,
+                type=TransactionType.expense,
+                category="Investments",
+                account_id=acc.id,
+                account=acc.name,
+                note=f"Stock Investment: {inv.instrument_name}"
+            )
+            db.add(tx)
+            _adjust_balance(db, acc.id, inv.amount_invested, "expense")
+            
     db.commit()
     db.refresh(inv)
     return inv
@@ -76,5 +95,17 @@ def delete_investment(iid: int, db: Session = Depends(get_db)):
     inv = db.query(StockInvestment).filter_by(id=iid).first()
     if not inv:
         raise HTTPException(404, "Investment not found")
+        
+    if inv.account_id:
+        tx = db.query(Transaction).filter_by(
+            account_id=inv.account_id,
+            amount=inv.amount_invested,
+            category="Investments",
+            note=f"Stock Investment: {inv.instrument_name}"
+        ).first()
+        if tx:
+            _adjust_balance(db, tx.account_id, tx.amount, tx.type.value, reverse=True)
+            db.delete(tx)
+            
     db.delete(inv)
     db.commit()

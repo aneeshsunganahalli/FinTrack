@@ -5,7 +5,7 @@ from sqlalchemy import func, extract
 from datetime import date, datetime
 from calendar import monthrange
 
-from backend.models import get_db, Transaction, BankAccount, StockInvestment
+from backend.models import get_db, Transaction, BankAccount, StockInvestment, MutualFund, MutualFundTransaction
 from backend.models.database import TransactionType
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
@@ -42,7 +42,7 @@ def get_dashboard(db: Session = Depends(get_db)):
             db.query(func.coalesce(func.sum(Transaction.amount), 0.0))
             .filter(
                 Transaction.type == TransactionType.expense,
-                (Transaction.category != "Investments") | (Transaction.category == None),
+                Transaction.category.notin_(["Investments", "Transfers"]) | (Transaction.category == None),
                 Transaction.date >= start,
                 Transaction.date <= end,
             )
@@ -56,6 +56,7 @@ def get_dashboard(db: Session = Depends(get_db)):
         db.query(func.coalesce(func.sum(Transaction.amount), 0.0))
         .filter(
             Transaction.type == TransactionType.income,
+            (Transaction.category != "Transfers") | (Transaction.category == None),
             Transaction.date >= this_start,
             Transaction.date <= this_end,
         )
@@ -67,7 +68,7 @@ def get_dashboard(db: Session = Depends(get_db)):
         db.query(Transaction.category, func.sum(Transaction.amount).label("total"))
         .filter(
             Transaction.type == TransactionType.expense,
-            (Transaction.category != "Investments") | (Transaction.category == None),
+            Transaction.category.notin_(["Investments", "Transfers"]) | (Transaction.category == None),
             Transaction.date >= this_start,
             Transaction.date <= this_end,
         )
@@ -90,6 +91,7 @@ def get_dashboard(db: Session = Depends(get_db)):
             db.query(func.coalesce(func.sum(Transaction.amount), 0.0))
             .filter(
                 Transaction.type == TransactionType.income,
+                (Transaction.category != "Transfers") | (Transaction.category == None),
                 Transaction.date >= s,
                 Transaction.date <= e,
             )
@@ -102,8 +104,52 @@ def get_dashboard(db: Session = Depends(get_db)):
         })
 
     # ── Investments snapshot ─────────────────────────────────────────────────
-    total_invested = db.query(func.coalesce(func.sum(StockInvestment.amount_invested), 0.0)).scalar()
-    total_current = db.query(func.coalesce(func.sum(StockInvestment.current_value), 0.0)).scalar()
+    stocks_invested = db.query(func.coalesce(func.sum(StockInvestment.amount_invested), 0.0)).scalar()
+    stocks_current = db.query(func.coalesce(func.sum(StockInvestment.current_value), 0.0)).scalar()
+    
+    # Calculate Mutual Funds
+    mf_invested = 0.0
+    mf_current = 0.0
+    mutual_funds = db.query(MutualFund).all()
+    
+    # Fetch recent SIPs this month
+    sips_this_month = (
+        db.query(MutualFundTransaction, MutualFund.fund_name)
+        .join(MutualFund, MutualFund.id == MutualFundTransaction.fund_id)
+        .filter(
+            MutualFundTransaction.type == "buy",
+            MutualFundTransaction.date >= this_start,
+            MutualFundTransaction.date <= this_end
+        )
+        .order_by(MutualFundTransaction.date.desc())
+        .limit(10)
+        .all()
+    )
+    sip_calendar = []
+    for tx, fname in sips_this_month:
+        sip_calendar.append({
+            "fund_name": fname,
+            "amount": tx.amount,
+            "date": tx.date.isoformat(),
+            "units": tx.units
+        })
+
+    for f in mutual_funds:
+        txs = db.query(MutualFundTransaction).filter(MutualFundTransaction.fund_id == f.id).all()
+        f_invested = 0.0
+        f_units = 0.0
+        for tx in txs:
+            if tx.type == "buy":
+                f_invested += tx.amount
+                f_units += tx.units
+            elif tx.type == "sell":
+                f_invested -= tx.amount
+                f_units -= tx.units
+        mf_invested += f_invested
+        mf_current += (f_units * f.current_nav) if f.current_nav else f_invested
+
+    total_invested = stocks_invested + mf_invested
+    total_current = stocks_current + mf_current
 
     return {
         "total_balance": total_balance,
@@ -117,9 +163,13 @@ def get_dashboard(db: Session = Depends(get_db)):
             "total_invested": total_invested,
             "total_current": total_current,
             "gain_loss": total_current - total_invested,
+            "allocation": {
+                "Stocks": stocks_current or stocks_invested,
+                "Mutual Funds": mf_current or mf_invested
+            },
+            "sip_calendar": sip_calendar
         },
     }
-
 
 @router.get("/analytics")
 def get_analytics(
@@ -151,7 +201,7 @@ def get_analytics(
         db.query(Transaction.category, func.sum(Transaction.amount).label("total"))
         .filter(
             Transaction.type == TransactionType.expense,
-            (Transaction.category != "Investments") | (Transaction.category == None),
+            Transaction.category.notin_(["Investments", "Transfers"]) | (Transaction.category == None),
             Transaction.date >= d_from,
             Transaction.date <= d_to,
         )

@@ -96,3 +96,9 @@ def delete_subscription(sub_id: int, db: Session = Depends(get_db)):
     db.delete(sub)
     db.commit()
     return {"ok": True}
+
+@router.post("/test-process")
+def test_process_subscriptions(db: Session = Depends(get_db)):
+    """Manually trigger the processing of due subscriptions."""
+    processed = process_due_subscriptions(db)
+    return {"message": f"Processed {processed} subscriptions."}

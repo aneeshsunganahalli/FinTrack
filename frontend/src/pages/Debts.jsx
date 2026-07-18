@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, CheckCircle, ArrowUpRight, ArrowDownLeft, Clock }
 import { getDebts, createDebt, updateDebt, deleteDebt, markDebtPaid, getAccounts } from '../lib/api';
 import { fmt, fmtDate } from '../lib/utils';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import Spinner from '../components/Spinner';
 import { useToast } from '../components/Toast';
 
@@ -105,6 +106,8 @@ export default function Debts() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [markPaidModal, setMarkPaidModal] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
   const [tab, setTab] = useState('pending');
   const toast = useToast();
 
@@ -127,22 +130,19 @@ export default function Debts() {
   }
 
   async function handleDelete(debt) {
-    if (!confirm(`Delete IOU for ${debt.person_name}?`)) return;
-    await deleteDebt(debt.id);
-    toast('Deleted');
-    load();
+    setConfirmModal({
+      title: 'Delete IOU',
+      message: `Are you sure you want to delete the IOU for ${debt.person_name}?`,
+      onConfirm: async () => {
+        await deleteDebt(debt.id);
+        toast('Deleted');
+        setConfirmModal(null);
+        load();
+      }
+    });
   }
 
-  async function handleMarkPaid(debt) {
-    if (!confirm(`Mark ${debt.person_name}'s ${fmt(debt.amount)} as paid? This will update your bank balance.`)) return;
-    try {
-      await markDebtPaid(debt.id);
-      toast('Marked as paid — balance updated!');
-      load();
-    } catch {
-      toast('Failed to mark as paid', 'error');
-    }
-  }
+
 
   const pending = debts.filter(d => d.status === 'pending');
   const paid = debts.filter(d => d.status === 'paid');
@@ -254,7 +254,7 @@ export default function Debts() {
                 {/* Actions */}
                 <div className="row-actions" style={{ opacity: 1, display: 'flex', gap: 6 }}>
                   {debt.status === 'pending' && (
-                    <button className="btn btn-sm" onClick={() => handleMarkPaid(debt)} title="Mark as Paid" style={{
+                    <button className="btn btn-sm" onClick={() => setMarkPaidModal(debt)} title="Mark as Paid" style={{
                       background: 'rgba(0,208,156,0.1)', border: '1px solid var(--accent-border)', color: 'var(--accent)',
                       display: 'flex', alignItems: 'center', gap: 4, fontSize: 12,
                     }}>
@@ -286,6 +286,42 @@ export default function Debts() {
             onClose={() => setModal(null)}
           />
         </Modal>
+      )}
+
+      {/* Mark Paid Modal */}
+      {markPaidModal && (
+        <Modal title="Confirm Payment" onClose={() => setMarkPaidModal(null)}>
+          <div style={{ color: 'white' }}>
+            <p style={{ marginBottom: 16 }}>
+              Mark {markPaidModal.person_name}'s {fmt(markPaidModal.amount)} as paid? This will update your bank balance.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setMarkPaidModal(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={async () => {
+                try {
+                  await markDebtPaid(markPaidModal.id);
+                  toast('Marked as paid — balance updated!');
+                  load();
+                  setMarkPaidModal(null);
+                } catch {
+                  toast('Failed to mark as paid', 'error');
+                }
+              }}>Confirm</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+          danger={true}
+          confirmText="Delete"
+        />
       )}
     </div>
   );

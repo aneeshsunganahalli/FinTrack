@@ -37,11 +37,25 @@ export const deleteInvestment = (id) => api.delete(`/investments/${id}`);
 export const searchInvestments = (q) => api.get('/investments/search', { params: { q } });
 export const refreshInvestmentPrices = () => api.post('/investments/refresh-prices');
 
+// ─── Mutual Funds ─────────────────────────────────────────────────────────────
+export const getMutualFunds = () => api.get('/mutual-funds');
+export const createMutualFund = (data) => api.post('/mutual-funds', data);
+export const updateMutualFund = (id, data) => api.patch(`/mutual-funds/${id}`, data);
+export const deleteMutualFund = (id) => api.delete(`/mutual-funds/${id}`);
+export const searchMutualFunds = (q) => api.get('/mutual-funds/search', { params: { q } });
+export const getMutualFundInfo = (schemeCode) => api.get(`/mutual-funds/info/${schemeCode}`);
+export const refreshMutualFundPrices = () => api.post('/mutual-funds/refresh-prices');
+
+export const getMutualFundTransactions = (fundId) => api.get(`/mutual-funds/${fundId}/transactions`);
+export const createMutualFundTransaction = (fundId, data) => api.post(`/mutual-funds/${fundId}/transactions`, data);
+export const deleteMutualFundTransaction = (fundId, txId) => api.delete(`/mutual-funds/${fundId}/transactions/${txId}`);
+
 // ─── Subscriptions ────────────────────────────────────────────────────────────
 export const getSubscriptions = () => api.get('/subscriptions');
 export const createSubscription = (data) => api.post('/subscriptions', data);
 export const updateSubscription = (id, data) => api.patch(`/subscriptions/${id}`, data);
 export const deleteSubscription = (id) => api.delete(`/subscriptions/${id}`);
+export const testProcessSubscriptions = () => api.post('/subscriptions/test-process');
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 export const getCategories = () => api.get('/categories');

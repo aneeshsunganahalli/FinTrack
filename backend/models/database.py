@@ -143,9 +143,12 @@ class StockInvestment(Base):
     units = Column(Float)
     date_invested = Column(Date)
     current_value = Column(Float)
+    account_id = Column(Integer, ForeignKey("bank_accounts.id"), nullable=True)
     notes = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    account_rel = relationship("BankAccount")
 
 
 class Settings(Base):
@@ -191,6 +194,40 @@ class Debt(Base):
     paid_date = Column(Date, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    account_rel = relationship("BankAccount")
+
+
+class MutualFund(Base):
+    __tablename__ = "mutual_funds"
+
+    id = Column(Integer, primary_key=True, index=True)
+    fund_name = Column(String(300), nullable=False)
+    platform = Column(String(200))
+    category = Column(String(100))
+    scheme_code = Column(String(50))
+    current_nav = Column(Float)
+    notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    transactions = relationship("MutualFundTransaction", back_populates="fund", cascade="all, delete-orphan")
+
+
+class MutualFundTransaction(Base):
+    __tablename__ = "mutual_fund_transactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    fund_id = Column(Integer, ForeignKey("mutual_funds.id"), nullable=False)
+    date = Column(Date, nullable=False)
+    amount = Column(Float, nullable=False)
+    nav = Column(Float, nullable=False)
+    units = Column(Float, nullable=False)
+    type = Column(String(50), default="buy") # buy or sell
+    account_id = Column(Integer, ForeignKey("bank_accounts.id"), nullable=True)
+    notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    fund = relationship("MutualFund", back_populates="transactions")
     account_rel = relationship("BankAccount")
 
 

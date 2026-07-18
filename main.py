@@ -13,7 +13,7 @@ from backend.routes import (
     transactions_router, accounts_router, wishlist_router,
     investments_router, categories_router, dashboard_router,
     settings_router, import_router, llm_router, subscriptions_router,
-    debts_router
+    debts_router, mutual_funds_router
 )
 
 app = FastAPI(
@@ -69,6 +69,7 @@ app.include_router(import_router)
 app.include_router(llm_router)
 app.include_router(subscriptions_router)
 app.include_router(debts_router)
+app.include_router(mutual_funds_router)
 
 
 # ─── Serve built frontend (production) ───────────────────────────────────────

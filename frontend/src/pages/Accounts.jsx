@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, AlertTriangle, ChevronDown, ChevronUp } from 'luc
 import { getAccounts, createAccount, updateAccount, deleteAccount } from '../lib/api';
 import { fmt } from '../lib/utils';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import Spinner from '../components/Spinner';
 import RecentTransactions from '../components/RecentTransactions';
 import { useToast } from '../components/Toast';
@@ -141,6 +142,7 @@ export default function Accounts() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
   const toast = useToast();
 
   const load = useCallback(() => {
@@ -157,9 +159,20 @@ export default function Accounts() {
   }
 
   async function handleDelete(acc) {
-    if (!confirm(`Delete account "${acc.name}"?`)) return;
-    try { await deleteAccount(acc.id); toast('Deleted'); load(); }
-    catch { toast('Failed to delete', 'error'); }
+    setConfirmModal({
+      title: 'Delete Account',
+      message: `Are you sure you want to delete account "${acc.name}"?`,
+      onConfirm: async () => {
+        try {
+          await deleteAccount(acc.id);
+          toast('Deleted');
+          setConfirmModal(null);
+          load();
+        } catch {
+          toast('Failed to delete', 'error');
+        }
+      }
+    });
   }
 
   const totalBalance = accounts.reduce((s, a) => s + a.current_balance, 0);
@@ -186,6 +199,18 @@ export default function Accounts() {
         <Modal title={modal === 'add' ? 'Add Bank Account' : 'Edit Account'} onClose={() => setModal(null)}>
           <AccountForm initial={modal === 'add' ? {} : modal} onSave={handleSave} onClose={() => setModal(null)} />
         </Modal>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+          danger={true}
+          confirmText="Delete"
+        />
       )}
     </div>
   );

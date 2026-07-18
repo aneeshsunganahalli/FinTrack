@@ -1263,8 +1263,7 @@ tr:hover .row-actions { opacity: 1; }
     flex: 1;
     max-height: none;
     min-height: 0;
-    padding: 16px;
-    padding-bottom: 16px;
+    padding: 16px 8px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -1291,7 +1290,7 @@ tr:hover .row-actions { opacity: 1; }
   }
   
   .ai-input-area {
-    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
     background: var(--bg-base);
     border-top: 1px solid var(--border);
     z-index: 2;
@@ -1310,5 +1309,9 @@ tr:hover .row-actions { opacity: 1; }
   .ai-pill-send {
     width: 34px;
     height: 34px;
+  }
+
+  .desktop-only {
+    display: none !important;
   }
 }

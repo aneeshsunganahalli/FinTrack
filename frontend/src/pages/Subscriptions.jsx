@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Repeat, CheckCircle } from 'lucide-react';
-import { getSubscriptions, createSubscription, updateSubscription, deleteSubscription, getAccounts, getCategories } from '../lib/api';
+import { getSubscriptions, createSubscription, updateSubscription, deleteSubscription, testProcessSubscriptions, getAccounts, getCategories } from '../lib/api';
 import { fmt, fmtDate } from '../lib/utils';
 import Modal from '../components/Modal';
+import ConfirmModal from '../components/ConfirmModal';
 import Spinner from '../components/Spinner';
 import { useToast } from '../components/Toast';
 
@@ -128,6 +129,7 @@ export default function Subscriptions() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
   const toast = useToast();
 
   const load = useCallback(async () => {
@@ -160,14 +162,20 @@ export default function Subscriptions() {
   }
 
   async function handleDelete(sub) {
-    if (!confirm(`Delete subscription "${sub.name}"?`)) return;
-    try {
-      await deleteSubscription(sub.id);
-      toast('Deleted!');
-      load();
-    } catch {
-      toast('Failed to delete', 'error');
-    }
+    setConfirmModal({
+      title: 'Delete Subscription',
+      message: `Are you sure you want to delete the subscription "${sub.name}"?`,
+      onConfirm: async () => {
+        try {
+          await deleteSubscription(sub.id);
+          toast('Deleted!');
+          setConfirmModal(null);
+          load();
+        } catch {
+          toast('Failed to delete', 'error');
+        }
+      }
+    });
   }
   
   async function handleToggleStatus(sub) {
@@ -178,6 +186,18 @@ export default function Subscriptions() {
       load();
     } catch {
       toast('Failed to update status', 'error');
+    }
+  }
+
+  async function handleTestProcess() {
+    setLoading(true);
+    try {
+      const res = await testProcessSubscriptions();
+      toast(res.data.message);
+      load();
+    } catch {
+      toast('Failed to process subscriptions', 'error');
+      setLoading(false);
     }
   }
 
@@ -245,9 +265,14 @@ export default function Subscriptions() {
           <h1 className="page-title">Subscriptions</h1>
           <p className="page-subtitle">Track your recurring expenses</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setModal('add')}>
-          <Plus size={15} /> Add Subscription
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-ghost" onClick={handleTestProcess} disabled={loading} title="Force check for due subscriptions now">
+            Test Auto-Deduct
+          </button>
+          <button className="btn btn-primary" onClick={() => setModal('add')}>
+            <Plus size={15} /> Add Subscription
+          </button>
+        </div>
       </div>
       
       {!loading && activeSubs.length > 0 && (
@@ -302,6 +327,18 @@ export default function Subscriptions() {
             onClose={() => setModal(null)} 
           />
         </Modal>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+          danger={true}
+          confirmText="Delete"
+        />
       )}
     </div>
   );
