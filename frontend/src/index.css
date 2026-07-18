@@ -603,6 +603,8 @@ tbody tr:hover { background: rgba(255,255,255,0.025); }
   line-height: 1.65;
   max-width: 88%;
   border: 1.5px solid var(--border);
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .chat-msg.user {
@@ -817,3 +819,496 @@ tr:hover .row-actions { opacity: 1; }
   font-variant-numeric: tabular-nums;
 }
 
+.mobile-header {
+  display: none;
+}
+
+/* ── AI Insights ── */
+.ai-layout {
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  align-items: start;
+  gap: 24px;
+}
+
+.ai-chat-window {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-welcome-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px 40px;
+  text-align: center;
+}
+
+.ai-welcome-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 24px;
+  max-width: 480px;
+}
+
+.ai-suggestion-chip {
+  padding: 8px 16px;
+  border-radius: 99px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.ai-suggestion-chip:hover:not(:disabled) {
+  background: var(--accent-glow);
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+}
+
+.ai-suggestion-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Pill Input Bar */
+.ai-input-area {
+  padding: 8px 0 0;
+}
+
+.ai-pill-input {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 99px;
+  padding: 4px 4px 4px 20px;
+  gap: 8px;
+  transition: border-color 0.2s;
+}
+
+.ai-pill-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 208, 156, 0.1);
+}
+
+.ai-pill-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  padding: 10px 0;
+  min-width: 0;
+}
+
+.ai-pill-field::placeholder {
+  color: var(--text-muted);
+}
+
+.ai-pill-send {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.ai-pill-send:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.ai-pill-send:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.suggested-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggested-questions-list .chip {
+  justify-content: flex-start;
+  text-align: left;
+  font-size: 13px;
+}
+
+/* ── Responsive Mobile (iPhone 15 Plus & others) ── */
+@media (max-width: 768px) {
+  .app-shell {
+    flex-direction: column;
+  }
+  
+  /* Mobile Header */
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: calc(env(safe-area-inset-top) + 16px) 16px 16px;
+    background: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-strong);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    font-family: 'Merriweather', serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  
+  .mobile-header .logo-icon {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border: 1.5px solid var(--accent-light);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Bottom Tab Bar */
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    height: calc(65px + env(safe-area-inset-bottom));
+    flex-direction: row;
+    border-right: none;
+    border-top: 1px solid var(--border-strong);
+    border-bottom: none;
+    padding: 0 0 env(safe-area-inset-bottom) 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    background: rgba(26, 26, 26, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  .sidebar-logo, .sidebar-section-label, .sidebar > div:last-child {
+    display: none;
+  }
+  
+  .sidebar-section {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-start;
+    align-items: center;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    padding: 0 12px;
+    margin-top: 0;
+    gap: 6px;
+  }
+  
+  .sidebar-section::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .nav-item {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    font-size: 10px;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--text-secondary);
+    min-width: 72px;
+    justify-content: center;
+    border-radius: 8px;
+    transition: color 0.2s;
+  }
+  
+  .nav-item svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 2px;
+  }
+
+  .nav-item.active {
+    color: var(--accent-light);
+  }
+  
+  .nav-item.active svg {
+    color: var(--accent-light);
+  }
+  
+  /* Main Content Area */
+  .main-content {
+    padding: 20px 16px calc(80px + env(safe-area-inset-bottom));
+  }
+  
+  /* Typography & Forms */
+  .form-input, .form-select, .form-textarea {
+    font-size: 16px; /* Prevent iOS zoom */
+    padding: 12px 14px;
+  }
+  
+  .btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .btn-sm {
+    padding: 8px 12px;
+  }
+  
+  .page-title {
+    font-size: 24px;
+  }
+  
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .page-header > div:last-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .page-header .btn-primary {
+    grid-column: 1 / -1;
+  }
+  
+  /* Tables to Cards via Grid */
+  .table-wrap {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+  
+  table, thead, tbody {
+    display: block;
+    width: 100%;
+  }
+  
+  thead {
+    display: none;
+  }
+  
+  tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: 
+      "category amount"
+      "account type"
+      "note date"
+      "actions actions";
+    gap: 6px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    align-items: center;
+  }
+  
+  td {
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+    display: flex;
+    align-items: center;
+  }
+  
+  td:nth-child(1) { grid-area: date; justify-content: flex-end; font-size: 11px !important; }
+  td:nth-child(2) { grid-area: category; }
+  td:nth-child(2) span:first-child { font-size: 15px !important; font-weight: 600; color: var(--text-primary) !important; }
+  td:nth-child(3) { grid-area: account; font-size: 12px !important; }
+  td:nth-child(4) { grid-area: note; font-size: 12px !important; color: var(--text-muted) !important; white-space: normal !important; max-width: 100% !important; }
+  td:nth-child(5) { grid-area: type; justify-content: flex-end; }
+  td:nth-child(6) { grid-area: amount; font-size: 18px !important; justify-content: flex-end; }
+  td:nth-child(7) { grid-area: actions; margin-top: 8px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); }
+  
+  .row-actions {
+    opacity: 1;
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    width: 100%;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+  
+  /* Modals */
+  .modal {
+    padding: 24px 20px;
+    margin: 16px;
+    width: calc(100% - 32px);
+    border-radius: 16px;
+  }
+  
+  /* Bulk Grid Form (Mobile Stack) */
+  .bulk-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .bulk-header {
+    display: none;
+  }
+  
+  .savings-calc-card {
+    padding: 20px;
+  }
+  
+  .toast-wrap {
+    bottom: calc(75px + env(safe-area-inset-bottom));
+    right: 16px;
+    left: 16px;
+  }
+  
+  .toast {
+    min-width: 0;
+    width: 100%;
+    padding: 14px 16px;
+  }
+  
+  /* ── AI Insights Mobile ── */
+  .ai-page-wrapper {
+    position: fixed;
+    top: calc(62px + env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    bottom: calc(65px + env(safe-area-inset-bottom));
+    background: var(--bg-base);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .ai-header, .ai-sidebar {
+    display: none;
+  }
+  
+  .ai-alert {
+    margin: 16px;
+    margin-bottom: 0 !important;
+  }
+  
+  .ai-layout {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .ai-chat-window {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    gap: 0;
+    overflow: hidden;
+  }
+  
+  .ai-chat-header {
+    display: none !important;
+  }
+  
+  .chat-messages {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+    padding: 16px;
+    padding-bottom: 16px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .ai-welcome-state {
+    padding: 40px 16px 24px;
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .ai-welcome-chips {
+    max-width: 100%;
+  }
+  
+  .ai-suggestion-chip {
+    font-size: 12px;
+    padding: 7px 14px;
+  }
+  
+  .chat-msg {
+    max-width: 92%;
+    font-size: 14px;
+    padding: 12px 16px;
+  }
+  
+  .ai-input-area {
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: var(--bg-base);
+    border-top: 1px solid var(--border);
+    z-index: 2;
+    flex-shrink: 0;
+  }
+  
+  .ai-pill-input {
+    padding: 3px 3px 3px 16px;
+  }
+  
+  .ai-pill-field {
+    font-size: 16px;
+    padding: 8px 0;
+  }
+  
+  .ai-pill-send {
+    width: 34px;
+    height: 34px;
+  }
+}

@@ -50,8 +50,8 @@ export default function AIInsights() {
   }
 
   return (
-    <div>
-      <div className="page-header">
+    <div className="ai-page-wrapper">
+      <div className="page-header ai-header">
         <div>
           <h1 className="page-title">AI Insights</h1>
           <p className="page-subtitle">Ask your local LLM about your finances</p>
@@ -73,25 +73,38 @@ export default function AIInsights() {
       </div>
 
       {!status?.available && !checking && (
-        <div className="alert alert-warning" style={{ marginBottom: 24 }}>
+        <div className="alert alert-warning ai-alert" style={{ marginBottom: 24 }}>
           <strong>Ollama is not running.</strong> Start Ollama locally with{' '}
           <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>ollama serve</code>{' '}
           and configure the model in Settings. Chat is disabled until connected.
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '7fr 3fr', alignItems: 'start', gap: 24 }}>
+      <div className="ai-layout">
         {/* Chat window */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <h3 className="section-title" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="card ai-chat-window">
+          <h3 className="section-title ai-chat-header" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
             <Bot size={16} color="var(--accent)" /> Chat
           </h3>
 
-          <div className="chat-messages" style={{ minHeight: 300 }}>
+          <div className="chat-messages">
             {messages.length === 0 && (
-              <div className="empty-state" style={{ padding: '40px 0' }}>
-                <Sparkles size={32} style={{ opacity: 0.3 }} />
-                <span className="empty-text">Ask anything about your finances</span>
+              <div className="ai-welcome-state">
+                <Sparkles size={36} style={{ opacity: 0.2, marginBottom: 12 }} />
+                <span className="empty-text" style={{ fontSize: 18, fontWeight: 600 }}>Jarvis AI</span>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Ask anything about your finances</span>
+                <div className="ai-welcome-chips">
+                  {SUGGESTIONS.map((s, i) => (
+                    <button
+                      key={i}
+                      className="ai-suggestion-chip"
+                      onClick={() => sendMessage(s)}
+                      disabled={!status?.available || loading}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             {messages.map((m, i) => {
@@ -116,39 +129,39 @@ export default function AIInsights() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
-          <div style={{ display: 'flex', gap: 10 }}>
-            <input
-              className="form-input"
-              placeholder={status?.available ? 'Ask about your spending…' : 'Ollama not connected'}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && sendMessage()}
-              disabled={!status?.available || loading}
-              style={{ flex: 1 }}
-            />
-            <button
-              className="btn btn-primary btn-icon"
-              onClick={() => sendMessage()}
-              disabled={!status?.available || loading || !input.trim()}
-            >
-              <Send size={15} />
-            </button>
+          {/* Pill input bar */}
+          <div className="ai-input-area">
+            <div className="ai-pill-input">
+              <input
+                className="ai-pill-field"
+                placeholder={status?.available ? 'Ask about your spending…' : 'Ollama not connected'}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                disabled={!status?.available || loading}
+              />
+              <button
+                className="ai-pill-send"
+                onClick={() => sendMessage()}
+                disabled={!status?.available || loading || !input.trim()}
+              >
+                <Send size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Suggested prompts */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Sidebar Info (desktop only) */}
+        <div className="ai-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="card">
             <h3 className="section-title" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
               <Sparkles size={15} color="var(--accent)" /> Suggested Questions
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="suggested-questions-list desktop-only">
               {SUGGESTIONS.map((s, i) => (
                 <button
                   key={i}
-                  className="btn btn-ghost"
-                  style={{ justifyContent: 'flex-start', textAlign: 'left', fontSize: 13 }}
+                  className="btn btn-ghost chip"
                   onClick={() => sendMessage(s)}
                   disabled={!status?.available || loading}
                 >

@@ -75,3 +75,10 @@ export const commitInvestmentsCSV = (file) => {
   const fd = new FormData(); fd.append('file', file);
   return api.post('/import/commit/investments', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
+
+// ─── Debts / IOUs ─────────────────────────────────────────────────────────────
+export const getDebts = (params) => api.get('/debts', { params });
+export const createDebt = (data) => api.post('/debts', data);
+export const updateDebt = (id, data) => api.patch(`/debts/${id}`, data);
+export const deleteDebt = (id) => api.delete(`/debts/${id}`);
+export const markDebtPaid = (id) => api.post(`/debts/${id}/mark-paid`);

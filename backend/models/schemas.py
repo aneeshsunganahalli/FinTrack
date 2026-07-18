@@ -2,7 +2,7 @@
 from pydantic import BaseModel, validator
 from typing import Optional, List
 from datetime import date, datetime
-from backend.models.database import TransactionType, AccountType, WishlistPriority, BillingCycle, SubscriptionStatus
+from backend.models.database import TransactionType, AccountType, WishlistPriority, BillingCycle, SubscriptionStatus, DebtDirection, DebtStatus
 
 
 # ─── Category Schemas ─────────────────────────────────────────────────────────
@@ -256,3 +256,40 @@ class LLMChatResponse(BaseModel):
     response: str
     model: Optional[str]
     available: bool
+
+
+# ─── Debt / IOU Schemas ──────────────────────────────────────────────────────
+
+class DebtCreate(BaseModel):
+    person_name: str
+    amount: float
+    direction: DebtDirection
+    date_created: date
+    due_date: Optional[date] = None
+    account_id: Optional[int] = None
+    note: Optional[str] = None
+
+class DebtUpdate(BaseModel):
+    person_name: Optional[str] = None
+    amount: Optional[float] = None
+    direction: Optional[DebtDirection] = None
+    date_created: Optional[date] = None
+    due_date: Optional[date] = None
+    account_id: Optional[int] = None
+    note: Optional[str] = None
+
+class DebtOut(BaseModel):
+    id: int
+    person_name: str
+    amount: float
+    direction: DebtDirection
+    date_created: date
+    due_date: Optional[date]
+    account_id: Optional[int]
+    account_name: Optional[str] = None
+    note: Optional[str]
+    status: DebtStatus
+    paid_date: Optional[date]
+    created_at: Optional[datetime]
+    class Config:
+        from_attributes = True

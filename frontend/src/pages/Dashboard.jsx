@@ -61,8 +61,8 @@ export default function Dashboard() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Your financial overview</p>
+          <h1 className="page-title">Welcome Back, Aneesh</h1>
+          <p className="page-subtitle">I've prepared today's financial briefing.</p>
         </div>
       </div>
 
@@ -147,8 +147,8 @@ export default function Dashboard() {
               <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="income" name="Income" fill="var(--accent)" radius={[3,3,0,0]} />
-              <Bar dataKey="expense" name="Expense" fill="var(--red)" radius={[3,3,0,0]} />
+              <Bar dataKey="income" name="Income" fill="var(--accent)" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="expense" name="Expense" fill="var(--red)" radius={[3, 3, 0, 0]} />
               <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 11, color: 'var(--text-secondary)' }} />
             </BarChart>
           </ResponsiveContainer>

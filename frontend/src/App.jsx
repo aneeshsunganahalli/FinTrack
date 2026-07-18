@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 import Sidebar from './components/Sidebar';
 import { ToastProvider } from './components/Toast';
+import { Wallet } from 'lucide-react';
 
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
@@ -10,7 +11,7 @@ import Wishlist from './pages/Wishlist';
 import Investments from './pages/Investments';
 import Subscriptions from './pages/Subscriptions';
 import Analytics from './pages/Analytics';
-import ImportExport from './pages/ImportExport';
+import Debts from './pages/Debts';
 import AIInsights from './pages/AIInsights';
 import Settings from './pages/Settings';
 
@@ -19,17 +20,24 @@ export default function App() {
     <BrowserRouter>
       <ToastProvider>
         <div className="app-shell">
+          {/* Mobile Top Header */}
+          <div className="mobile-header">
+            <div className="logo-icon">
+              <Wallet size={16} color="#fff" strokeWidth={2.5} />
+            </div>
+            <span>Jarvis</span>
+          </div>
           <Sidebar />
           <main className="main-content">
             <Routes>
               <Route path="/"             element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/accounts"     element={<Accounts />} />
+              <Route path="/debts"        element={<Debts />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
               <Route path="/wishlist"     element={<Wishlist />} />
               <Route path="/investments"  element={<Investments />} />
               <Route path="/analytics"    element={<Analytics />} />
-              <Route path="/import"       element={<ImportExport />} />
               <Route path="/ai"           element={<AIInsights />} />
               <Route path="/settings"     element={<Settings />} />
             </Routes>

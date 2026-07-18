@@ -58,6 +58,14 @@ class SubscriptionStatus(str, enum.Enum):
     active = "active"
     cancelled = "cancelled"
 
+class DebtDirection(str, enum.Enum):
+    owed_to_me = "owed_to_me"
+    i_owe = "i_owe"
+
+class DebtStatus(str, enum.Enum):
+    pending = "pending"
+    paid = "paid"
+
 
 # ─── Models ───────────────────────────────────────────────────────────────────
 
@@ -164,6 +172,24 @@ class Subscription(Base):
     notes = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    account_rel = relationship("BankAccount")
+
+
+class Debt(Base):
+    __tablename__ = "debts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    person_name = Column(String(200), nullable=False)
+    amount = Column(Float, nullable=False)
+    direction = Column(SAEnum(DebtDirection), nullable=False)
+    date_created = Column(Date, nullable=False)
+    due_date = Column(Date, nullable=True)
+    account_id = Column(Integer, ForeignKey("bank_accounts.id"), nullable=True)
+    note = Column(Text)
+    status = Column(SAEnum(DebtStatus), default=DebtStatus.pending)
+    paid_date = Column(Date, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     account_rel = relationship("BankAccount")
 

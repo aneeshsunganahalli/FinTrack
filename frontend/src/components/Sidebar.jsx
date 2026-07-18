@@ -1,18 +1,18 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowLeftRight, Building2, Heart,
-  TrendingUp, BarChart2, Upload, Bot, Settings, Wallet, Repeat,
+  TrendingUp, BarChart2, Bot, Settings, Wallet, Repeat, HandCoins,
 } from 'lucide-react';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
   { to: '/accounts', icon: Building2, label: 'Bank Accounts' },
+  { to: '/debts', icon: HandCoins, label: 'IOUs' },
   { to: '/subscriptions', icon: Repeat, label: 'Subscriptions' },
   { to: '/wishlist', icon: Heart, label: 'Wishlist' },
   { to: '/investments', icon: TrendingUp, label: 'Investments' },
   { to: '/analytics', icon: BarChart2, label: 'Analytics' },
-  { to: '/import', icon: Upload, label: 'Import / Export' },
   { to: '/ai', icon: Bot, label: 'AI Insights' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
