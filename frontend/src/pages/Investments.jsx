@@ -6,7 +6,7 @@ import {
   getMutualFunds, createMutualFund, updateMutualFund, deleteMutualFund, searchMutualFunds, getMutualFundInfo, refreshMutualFundPrices,
   getMutualFundTransactions, createMutualFundTransaction, deleteMutualFundTransaction, getAccounts
 } from '../lib/api';
-import { fmt, fmtDate } from '../lib/utils';
+import { fmt, fmtDate, fmtChartYAxis } from '../lib/utils';
 import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal';
 import Spinner from '../components/Spinner';
@@ -288,7 +288,7 @@ function StocksTab() {
             <BarChart data={chartData} barCategoryGap="30%">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="name" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+              <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => fmtChartYAxis(v)} />
               <Tooltip formatter={(v) => [fmt(v)]} contentStyle={{ background: 'var(--bg-card)', border: '1.5px solid var(--border-strong)', borderRadius: 4 }} />
               <Bar dataKey="invested" name="Invested" fill="#6B8FF0" radius={[3,3,0,0]} />
               <Bar dataKey="current" name="Current" fill="var(--accent)" radius={[3,3,0,0]} />

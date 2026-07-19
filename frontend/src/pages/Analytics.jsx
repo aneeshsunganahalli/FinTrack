@@ -4,7 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
 } from 'recharts';
 import { getAnalytics, getDashboard } from '../lib/api';
-import { fmt, CHART_COLORS } from '../lib/utils';
+import { fmt, fmtChartYAxis, CHART_COLORS } from '../lib/utils';
 import Spinner from '../components/Spinner';
 
 const PERIODS = [
@@ -76,14 +76,14 @@ export default function Analytics() {
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
                       <Pie
-                        data={analytics?.category_spend}
+                        data={analytics?.category_spend?.filter(c => c.amount > 0)}
                         dataKey="amount"
                         nameKey="category"
                         cx="50%" cy="50%"
                         innerRadius={70} outerRadius={110}
                         paddingAngle={3}
                       >
-                        {analytics?.category_spend?.map((_, i) => (
+                        {analytics?.category_spend?.filter(c => c.amount > 0).map((_, i) => (
                           <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                         ))}
                       </Pie>
@@ -147,7 +147,7 @@ export default function Analytics() {
               <LineChart data={trend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={v => fmtChartYAxis(v)} domain={['auto', 'auto']} />
                 <Tooltip content={<CustomTooltip />} />
                 <Line type="monotone" dataKey="income" name="Income" stroke="var(--accent)" strokeWidth={2.5} dot={{ fill: 'var(--accent)', strokeWidth: 0, r: 4 }} />
                 <Line type="monotone" dataKey="expense" name="Expense" stroke="var(--red)" strokeWidth={2.5} dot={{ fill: 'var(--red)', strokeWidth: 0, r: 4 }} />

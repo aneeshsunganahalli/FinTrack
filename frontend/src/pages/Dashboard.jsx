@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { AlertTriangle, TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, PiggyBank, Target, Calendar } from 'lucide-react';
 import { getDashboard } from '../lib/api';
-import { fmt, fmtDate, CHART_COLORS } from '../lib/utils';
+import { fmt, fmtDate, fmtChartYAxis, CHART_COLORS } from '../lib/utils';
 import Spinner from '../components/Spinner';
 import RecentTransactions from '../components/RecentTransactions';
 import ExpenseViabilityCalc from '../components/ExpenseViabilityCalc';
@@ -35,12 +35,16 @@ function StatCard({ label, value, sub, subColor, icon: Icon, accent, borderColor
   );
 }
 
-const CustomTooltip = ({ active, payload }) => {
+const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: 'var(--bg-card)', border: '1.5px solid var(--border-strong)', borderRadius: 4, padding: '9px 13px', boxShadow: 'var(--brutal-shadow)' }}>
-      <p style={{ color: 'var(--text-secondary)', fontSize: 11 }}>{payload[0].name}</p>
-      <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: 14, fontFamily: "'Merriweather', serif" }}>{fmt(payload[0].value)}</p>
+      <p style={{ color: 'var(--text-secondary)', fontSize: 11 }}>{label || payload[0].name}</p>
+      {payload.map((p, i) => (
+        <p key={i} style={{ color: p.color || 'var(--text-primary)', fontWeight: 700, fontSize: 14, fontFamily: "'Merriweather', serif" }}>
+          {p.name && label ? `${p.name}: ` : ''}{fmt(p.value)}
+        </p>
+      ))}
     </div>
   );
 };
@@ -126,14 +130,14 @@ export default function Dashboard() {
             <>
               <ResponsiveContainer width="100%" height={230}>
                 <PieChart>
-                  <Pie data={data.category_spend} dataKey="amount" nameKey="category" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3}>
-                    {data.category_spend.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                  <Pie data={data.category_spend.filter(c => c.amount > 0)} dataKey="amount" nameKey="category" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3}>
+                    {data.category_spend.filter(c => c.amount > 0).map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginTop: 8 }}>
-                {data.category_spend.slice(0, 6).map((c, i) => (
+                {data.category_spend.filter(c => c.amount > 0).slice(0, 6).map((c, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
                     <div className="color-dot" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
                     <span style={{ color: 'var(--text-secondary)' }}>{c.category}</span>
@@ -152,7 +156,7 @@ export default function Dashboard() {
             <BarChart data={data.monthly_trend} barCategoryGap="30%">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+              <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => fmtChartYAxis(v)} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="income" name="Income" fill="var(--accent)" radius={[3, 3, 0, 0]} />
               <Bar dataKey="expense" name="Expense" fill="var(--red)" radius={[3, 3, 0, 0]} />

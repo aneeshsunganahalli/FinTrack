@@ -80,12 +80,13 @@ def get_dashboard(db: Session = Depends(get_db)):
     # ── Monthly trend (last 12 months) ──────────────────────────────────────
     monthly_trend = []
     for i in range(11, -1, -1):
-        mo = (m - i - 1) % 12 + 1
-        yr = y - (i + (m == 1)) // 12 if m - i <= 0 else y - i // 12
-        # simpler calc
-        from datetime import timedelta
-        ref = date(y, m, 1) - timedelta(days=30 * i)
-        s, e = _month_range(ref.year, ref.month)
+        mo = m - i
+        yr = y
+        while mo <= 0:
+            mo += 12
+            yr -= 1
+            
+        s, e = _month_range(yr, mo)
         spend = month_spend(s, e)
         income_val = (
             db.query(func.coalesce(func.sum(Transaction.amount), 0.0))
@@ -98,7 +99,7 @@ def get_dashboard(db: Session = Depends(get_db)):
             .scalar()
         )
         monthly_trend.append({
-            "month": ref.strftime("%b %Y"),
+            "month": date(yr, mo, 1).strftime("%b %Y"),
             "expense": spend,
             "income": income_val,
         })

@@ -2,15 +2,36 @@
 
 export function fmt(amount, symbol = '₹') {
   if (amount === null || amount === undefined) return `${symbol}0`;
-  return `${symbol}${Math.abs(amount).toLocaleString('en-IN', {
+  const sign = amount < 0 ? '-' : '';
+  return `${sign}${symbol}${Math.abs(amount).toLocaleString('en-IN', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`;
 }
 
 export function fmtSigned(amount, symbol = '₹') {
-  const formatted = fmt(Math.abs(amount), symbol);
+  if (amount === null || amount === undefined) return `+${symbol}0`;
+  const formatted = `${symbol}${Math.abs(amount).toLocaleString('en-IN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
   return amount >= 0 ? `+${formatted}` : `-${formatted}`;
+}
+
+export function fmtChartYAxis(v, symbol = '₹') {
+  if (v === 0) return `${symbol}0`;
+  const val = Math.abs(v);
+  let formatted;
+  if (val >= 10000000) {
+    formatted = `${(val / 10000000).toFixed(1).replace(/\.0$/, '')}Cr`;
+  } else if (val >= 100000) {
+    formatted = `${(val / 100000).toFixed(1).replace(/\.0$/, '')}L`;
+  } else if (val >= 1000) {
+    formatted = `${(val / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+  } else {
+    formatted = val.toString();
+  }
+  return v < 0 ? `-${symbol}${formatted}` : `${symbol}${formatted}`;
 }
 
 export function fmtDate(dateStr) {
