@@ -22,8 +22,8 @@ export default function App() {
         <div className="app-shell">
           {/* Mobile Top Header */}
           <div className="mobile-header">
-            <div className="logo-icon">
-              <img src="/Favicon.png" alt="Jarvis logo" width={20} height={20} style={{ objectFit: 'contain' }} />
+            <div className="">
+              <img src="/Favicon.png" alt="Jarvis logo" width={35} height={35} style={{ objectFit: 'contain' }} />
             </div>
             <span>Jarvis</span>
           </div>

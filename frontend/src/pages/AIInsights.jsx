@@ -93,7 +93,7 @@ export default function AIInsights() {
                 <Sparkles size={36} style={{ opacity: 0.2, marginBottom: 12 }} />
                 <span className="empty-text" style={{ fontSize: 18, fontWeight: 600 }}>Jarvis AI</span>
                 <span style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>Ask anything about your finances</span>
-                <div className="ai-welcome-chips desktop-only">
+                <div className="ai-welcome-chips">
                   {SUGGESTIONS.map((s, i) => (
                     <button
                       key={i}

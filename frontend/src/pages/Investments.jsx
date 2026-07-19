@@ -213,7 +213,7 @@ function StocksTab() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div className="page-header" style={{ marginBottom: 20 }}>
         <input 
           type="text" 
           className="form-input" 
@@ -222,7 +222,7 @@ function StocksTab() {
           onChange={e => setSearchQuery(e.target.value)} 
           style={{ maxWidth: 250 }}
         />
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div>
           <button className="btn btn-ghost btn-sm" onClick={handleRefresh} disabled={loading}>Refresh Prices</button>
           <button className="btn btn-primary btn-sm" onClick={() => setModal('add')}><Plus size={14} /> Add Stock/Direct</button>
         </div>
@@ -698,7 +698,7 @@ function MutualFundsTab() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div className="page-header" style={{ marginBottom: 20 }}>
         <input 
           type="text" 
           className="form-input" 
@@ -707,7 +707,7 @@ function MutualFundsTab() {
           onChange={e => setSearchQuery(e.target.value)} 
           style={{ maxWidth: 250 }}
         />
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div>
           <button className="btn btn-ghost btn-sm" onClick={handleRefreshPrices} disabled={loading}>Refresh Prices</button>
           <button className="btn btn-primary btn-sm" onClick={() => setModal('add')}><Plus size={14} /> Add Mutual Fund</button>
         </div>
@@ -747,8 +747,8 @@ function MutualFundsTab() {
               
               return (
                 <div key={fund.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div style={{ flex: 1 }}>
+                  <div className="mf-row" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div className="mf-row-title" style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
                         {fund.fund_name}
                         <span className="badge badge-info" style={{ fontSize: 10 }}>{fund.category}</span>
@@ -758,18 +758,20 @@ function MutualFundsTab() {
                       </div>
                     </div>
                     
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Invested</div>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>{fmt(fund.total_invested)}</div>
-                    </div>
-                    <div style={{ textAlign: 'right', minWidth: 100 }}>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: pl >= 0 ? 'var(--accent-light)' : 'var(--red)' }}>
-                        {fmt(fund.current_value)}
+                    <div className="mf-row-stats" style={{ display: 'flex', gap: 16, textAlign: 'right' }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Invested</div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{fmt(fund.total_invested)}</div>
+                      </div>
+                      <div style={{ minWidth: 100 }}>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: pl >= 0 ? 'var(--accent-light)' : 'var(--red)' }}>
+                          {fmt(fund.current_value)}
+                        </div>
                       </div>
                     </div>
                     
-                    <div style={{ display: 'flex', gap: 6, marginLeft: 10 }}>
+                    <div className="mf-row-actions" style={{ display: 'flex', gap: 6, marginLeft: 10 }}>
                       <button className="btn btn-ghost btn-sm" onClick={() => setTxModal(fund.id)} title="Add SIP/Redemption">
                         <Plus size={14} /> SIP
                       </button>
