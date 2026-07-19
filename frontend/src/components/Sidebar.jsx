@@ -21,8 +21,8 @@ export default function Sidebar() {
   return (
     <nav className="sidebar">
       <div className="sidebar-logo">
-        <div className="logo-icon">
-          <Wallet size={17} color="#fff" strokeWidth={2.5} />
+        <div className="">
+          <img src="/Favicon.png" alt="Jarvis logo" width={35} height={35} style={{ objectFit: 'contain' }} />
         </div>
         <span>Jarvis</span>
       </div>
@@ -40,12 +40,6 @@ export default function Sidebar() {
             {label}
           </NavLink>
         ))}
-      </div>
-
-      <div style={{ marginTop: 'auto', padding: '14px 18px 0', borderTop: '1.5px solid var(--border)' }}>
-        <p style={{ fontSize: 9, color: 'var(--text-muted)', lineHeight: 1.8, textTransform: 'uppercase', letterSpacing: '1px' }}>
-          FinTrack v1.0 · All data stored locally
-        </p>
       </div>
     </nav>
   );

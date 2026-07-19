@@ -23,7 +23,7 @@ export default function App() {
           {/* Mobile Top Header */}
           <div className="mobile-header">
             <div className="logo-icon">
-              <Wallet size={16} color="#fff" strokeWidth={2.5} />
+              <img src="/Favicon.png" alt="Jarvis logo" width={20} height={20} style={{ objectFit: 'contain' }} />
             </div>
             <span>Jarvis</span>
           </div>
