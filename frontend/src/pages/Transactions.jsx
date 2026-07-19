@@ -49,6 +49,7 @@ function TransactionForm({ initial, categories, accounts, defaultAccountId, onSa
     ...resolvedInitial,
   });
   const [saving, setSaving] = useState(false);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const toast = useToast();
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -62,13 +63,10 @@ function TransactionForm({ initial, categories, accounts, defaultAccountId, onSa
     }));
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (!form.amount || !form.date) return;
+  async function executeSubmit() {
     setSaving(true);
     try {
       const payload = { ...form, amount: parseFloat(form.amount) };
-      // Convert empty strings to null to satisfy Pydantic validation for Optional fields
       Object.keys(payload).forEach(key => {
         if (payload[key] === '') {
           payload[key] = null;
@@ -77,11 +75,30 @@ function TransactionForm({ initial, categories, accounts, defaultAccountId, onSa
       await onSave(payload);
       toast('Transaction saved!');
       onClose();
-    } catch {
-      toast('Failed to save transaction', 'error');
+    } catch (err) {
+      if (err.response?.data?.detail) {
+        toast(err.response.data.detail, 'error');
+      } else {
+        toast('Failed to save transaction', 'error');
+      }
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.amount || !form.date) return;
+    
+    if (form.type !== 'income') {
+      const selectedAcc = accounts.find(a => String(a.id) === String(form.account_id));
+      if (selectedAcc && selectedAcc.account_type === 'piggy_bank') {
+        setConfirmWithdraw(true);
+        return;
+      }
+    }
+    
+    executeSubmit();
   }
 
   return (
@@ -141,6 +158,19 @@ function TransactionForm({ initial, categories, accounts, defaultAccountId, onSa
           Save Transaction
         </button>
       </div>
+
+      {confirmWithdraw && (
+        <ConfirmModal
+          title="Withdraw from Piggy Bank?"
+          message="Are you sure you want to take money out of your Piggy Bank for this?"
+          onConfirm={() => {
+            setConfirmWithdraw(false);
+            executeSubmit();
+          }}
+          onCancel={() => setConfirmWithdraw(false)}
+          confirmText="Yes, take money out"
+        />
+      )}
     </form>
   );
 }
@@ -201,8 +231,12 @@ function BulkEntryPanel({ categories, accounts, defaultAccountId, onDone }) {
       // Reset with fresh rows
       setRows([makeEmptyRow(rowDefaults), makeEmptyRow(rowDefaults), makeEmptyRow(rowDefaults)]);
       onDone();
-    } catch {
-      toast('Failed to save transactions', 'error');
+    } catch (err) {
+      if (err.response?.data?.detail) {
+        toast(err.response.data.detail, 'error');
+      } else {
+        toast('Failed to save transactions', 'error');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -384,8 +418,12 @@ export default function Transactions() {
           toast('Deleted!');
           setConfirmModal(null);
           load();
-        } catch {
-          toast('Failed to delete', 'error');
+        } catch (err) {
+          if (err.response?.data?.detail) {
+            toast(err.response.data.detail, 'error');
+          } else {
+            toast('Failed to delete', 'error');
+          }
         }
       }
     });

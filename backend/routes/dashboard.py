@@ -6,7 +6,7 @@ from datetime import date, datetime
 from calendar import monthrange
 
 from backend.models import get_db, Transaction, BankAccount, StockInvestment, MutualFund, MutualFundTransaction
-from backend.models.database import TransactionType
+from backend.models.database import TransactionType, AccountType
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -28,8 +28,8 @@ def get_dashboard(db: Session = Depends(get_db)):
     prev_start, prev_end = _month_range(py, pm)
 
     # ── Total balances ───────────────────────────────────────────────────────
-    total_balance = db.query(func.coalesce(func.sum(BankAccount.current_balance), 0.0)).scalar()
-    accounts = db.query(BankAccount).all()
+    total_balance = db.query(func.coalesce(func.sum(BankAccount.current_balance), 0.0)).filter(BankAccount.account_type != AccountType.piggy_bank).scalar()
+    accounts = db.query(BankAccount).filter(BankAccount.account_type != AccountType.piggy_bank).all()
     low_balance_alerts = [
         {"id": a.id, "name": a.name, "balance": a.current_balance, "minimum": a.minimum_balance}
         for a in accounts

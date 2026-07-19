@@ -23,6 +23,8 @@ def _adjust_balance(db: Session, account_id: int | None, amount: float, tx_type:
             if reverse:
                 # Undo: income was added → subtract; expense/transfer was subtracted → add
                 if tx_type == "income":
+                    if acc.current_balance < amount:
+                        raise HTTPException(status_code=400, detail=f"Insufficient funds in {acc.name} to reverse income.")
                     acc.current_balance -= amount
                 else:
                     acc.current_balance += amount
@@ -31,12 +33,16 @@ def _adjust_balance(db: Session, account_id: int | None, amount: float, tx_type:
                 if tx_type == "income":
                     acc.current_balance += amount
                 else:
+                    if acc.current_balance < amount:
+                        raise HTTPException(status_code=400, detail=f"Insufficient funds in {acc.name}.")
                     acc.current_balance -= amount
 
     if tx_type == "transfer" and to_account_id:
         to_acc = db.query(BankAccount).filter_by(id=to_account_id).first()
         if to_acc:
             if reverse:
+                if to_acc.current_balance < amount:
+                    raise HTTPException(status_code=400, detail=f"Insufficient funds in {to_acc.name} to reverse transfer.")
                 to_acc.current_balance -= amount
             else:
                 to_acc.current_balance += amount

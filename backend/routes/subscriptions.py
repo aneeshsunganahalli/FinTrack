@@ -29,10 +29,12 @@ def process_due_subscriptions(db: Session):
             note=f"Subscription: {sub.name}"
         )
         
-        # Resolve account name
+        # Resolve account name and check balance
         if sub.account_id:
             acc = db.query(BankAccount).filter_by(id=sub.account_id).first()
             if acc:
+                if acc.current_balance < sub.amount:
+                    continue  # Skip processing this subscription due to insufficient funds
                 tx.account = acc.name
                 acc.current_balance -= sub.amount # deduct from account
         

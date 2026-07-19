@@ -32,6 +32,7 @@ function InvestmentForm({ initial, onSave, onClose }) {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [accounts, setAccounts] = useState([]);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const toast = useToast();
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -58,8 +59,7 @@ function InvestmentForm({ initial, onSave, onClose }) {
     };
   }, [form.instrument_name]);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function executeSubmit() {
     setSaving(true);
     try {
       await onSave({
@@ -71,11 +71,29 @@ function InvestmentForm({ initial, onSave, onClose }) {
       });
       toast('Investment saved!');
       onClose();
-    } catch {
-      toast('Failed to save', 'error');
+    } catch (err) {
+      if (err.response?.data?.detail) {
+        toast(err.response.data.detail, 'error');
+      } else {
+        toast('Failed to save', 'error');
+      }
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    
+    if (form.account_id && !confirmWithdraw) {
+      const selectedAcc = accounts.find(a => String(a.id) === String(form.account_id));
+      if (selectedAcc && selectedAcc.account_type === 'piggy_bank') {
+        setConfirmWithdraw(true);
+        return;
+      }
+    }
+
+    executeSubmit();
   }
 
   return (
@@ -150,6 +168,19 @@ function InvestmentForm({ initial, onSave, onClose }) {
           {saving ? <Spinner size={16} /> : null} Save
         </button>
       </div>
+
+      {confirmWithdraw && (
+        <ConfirmModal
+          title="Withdraw from Piggy Bank?"
+          message="Are you sure you want to take money out of your Piggy Bank for this investment?"
+          onConfirm={() => {
+            setConfirmWithdraw(false);
+            executeSubmit();
+          }}
+          onCancel={() => setConfirmWithdraw(false)}
+          confirmText="Yes, take money out"
+        />
+      )}
     </form>
   );
 }
@@ -343,6 +374,7 @@ function MutualFundForm({ initial, onSave, onClose }) {
   const [searching, setSearching] = useState(false);
   const [mfSearchQuery, setMfSearchQuery] = useState('');
   const [accounts, setAccounts] = useState([]);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   useEffect(() => {
@@ -373,12 +405,26 @@ function MutualFundForm({ initial, onSave, onClose }) {
     }
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function executeSubmit() {
     setSaving(true);
     await onSave(form);
     setSaving(false);
     onClose();
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    
+    // Check if linked account is Piggy Bank
+    if (form.account_id && !confirmWithdraw) {
+      const selectedAcc = accounts.find(a => String(a.id) === String(form.account_id));
+      if (selectedAcc && selectedAcc.account_type === 'piggy_bank') {
+        setConfirmWithdraw(true);
+        return;
+      }
+    }
+    
+    executeSubmit();
   }
 
   return (
@@ -491,6 +537,19 @@ function MutualFundForm({ initial, onSave, onClose }) {
         <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
         <button type="submit" className="btn btn-primary" disabled={saving}>Save Fund</button>
       </div>
+
+      {confirmWithdraw && (
+        <ConfirmModal
+          title="Withdraw from Piggy Bank?"
+          message="Are you sure you want to take money out of your Piggy Bank for this initial investment?"
+          onConfirm={() => {
+            setConfirmWithdraw(false);
+            executeSubmit();
+          }}
+          onCancel={() => setConfirmWithdraw(false)}
+          confirmText="Yes, take money out"
+        />
+      )}
     </form>
   );
 }
@@ -499,6 +558,7 @@ function MutualFundTxForm({ fundId, initialNav, onSave, onClose }) {
   const [form, setForm] = useState({ ...EMPTY_MF_TX, nav: initialNav || '' });
   const [saving, setSaving] = useState(false);
   const [accounts, setAccounts] = useState([]);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   useEffect(() => {
@@ -511,8 +571,7 @@ function MutualFundTxForm({ fundId, initialNav, onSave, onClose }) {
     }
   }, [form.amount, form.nav]);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function executeSubmit() {
     setSaving(true);
     await onSave(fundId, {
       ...form,
@@ -523,6 +582,21 @@ function MutualFundTxForm({ fundId, initialNav, onSave, onClose }) {
     });
     setSaving(false);
     onClose();
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    
+    // Check Piggy Bank if buying
+    if (form.type === 'buy' && form.account_id && !confirmWithdraw) {
+      const selectedAcc = accounts.find(a => String(a.id) === String(form.account_id));
+      if (selectedAcc && selectedAcc.account_type === 'piggy_bank') {
+        setConfirmWithdraw(true);
+        return;
+      }
+    }
+
+    executeSubmit();
   }
 
   return (
@@ -566,6 +640,19 @@ function MutualFundTxForm({ fundId, initialNav, onSave, onClose }) {
         <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
         <button type="submit" className="btn btn-primary" disabled={saving}>Save Transaction</button>
       </div>
+
+      {confirmWithdraw && (
+        <ConfirmModal
+          title="Withdraw from Piggy Bank?"
+          message="Are you sure you want to take money out of your Piggy Bank for this investment?"
+          onConfirm={() => {
+            setConfirmWithdraw(false);
+            executeSubmit();
+          }}
+          onCancel={() => setConfirmWithdraw(false)}
+          confirmText="Yes, take money out"
+        />
+      )}
     </form>
   );
 }
@@ -635,8 +722,12 @@ function MutualFundsTab() {
       }
       toast('Fund saved!');
       load();
-    } catch {
-      toast('Error saving fund', 'error');
+    } catch (err) {
+      if (err.response?.data?.detail) {
+        toast(err.response.data.detail, 'error');
+      } else {
+        toast('Error saving fund', 'error');
+      }
     }
   }
 
@@ -660,8 +751,12 @@ function MutualFundsTab() {
       toast('Transaction saved!');
       load();
       if (expandedFundId === fundId) loadTxs(fundId);
-    } catch {
-      toast('Error saving transaction', 'error');
+    } catch (err) {
+      if (err.response?.data?.detail) {
+        toast(err.response.data.detail, 'error');
+      } else {
+        toast('Error saving transaction', 'error');
+      }
     }
   }
 

@@ -14,8 +14,19 @@ import Analytics from './pages/Analytics';
 import Debts from './pages/Debts';
 import AIInsights from './pages/AIInsights';
 import Settings from './pages/Settings';
+import PiggyBankWidget from './components/PiggyBankWidget';
+import { useEffect } from 'react';
 
 export default function App() {
+  useEffect(() => {
+    const user = localStorage.getItem('active_user') || 'Aneesh';
+    if (user === 'Pragya') {
+      document.body.classList.add('theme-pink');
+    } else {
+      document.body.classList.remove('theme-pink');
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <ToastProvider>
@@ -42,6 +53,7 @@ export default function App() {
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>
+          <PiggyBankWidget />
         </div>
       </ToastProvider>
     </BrowserRouter>

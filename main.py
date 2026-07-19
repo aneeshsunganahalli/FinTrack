@@ -31,6 +31,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from backend.models.database import user_id_var
+from fastapi import Request
+
+@app.middleware("http")
+async def user_id_middleware(request: Request, call_next):
+    user = request.headers.get("x-user-id", "Aneesh")
+    token = user_id_var.set(user)
+    response = await call_next(request)
+    user_id_var.reset(token)
+    return response
+
 import asyncio
 from backend.models import init_db, SessionLocal
 from backend.routes.subscriptions import process_due_subscriptions
@@ -39,12 +50,15 @@ from backend.routes.investments import refresh_investment_prices
 async def background_worker():
     while True:
         try:
-            db = SessionLocal()
-            try:
-                process_due_subscriptions(db)
-                refresh_investment_prices(db)
-            finally:
-                db.close()
+            for user in ["Aneesh", "Pragya"]:
+                token = user_id_var.set(user)
+                db = SessionLocal()
+                try:
+                    process_due_subscriptions(db)
+                    refresh_investment_prices(db)
+                finally:
+                    db.close()
+                user_id_var.reset(token)
         except Exception as e:
             print(f"Background worker error: {e}")
         # Run every 12 hours

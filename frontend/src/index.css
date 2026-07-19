@@ -25,6 +25,16 @@
   --brutal-shadow-hover: 5px 5px 0 rgba(65,105,225,0.45);
 }
 
+.theme-pink {
+  --accent:       #E84898;
+  --accent-light: #F06BAA;
+  --accent-dim:   #CC2F75;
+  --accent-glow:  rgba(232, 72, 152, 0.18);
+  --accent-border:rgba(232, 72, 152, 0.45);
+  --brutal-shadow: 3px 3px 0 rgba(232, 72, 152, 0.35);
+  --brutal-shadow-hover: 5px 5px 0 rgba(232, 72, 152, 0.45);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body, #root {

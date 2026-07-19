@@ -27,6 +27,22 @@ export default function Sidebar() {
         <span>Jarvis</span>
       </div>
 
+      <div className="sidebar-section" style={{ marginBottom: '14px' }}>
+        <div className="sidebar-section-label">User</div>
+        <select 
+          className="form-select" 
+          style={{ width: '100%', fontSize: '13px', padding: '6px 10px', background: 'var(--bg-input)' }}
+          value={localStorage.getItem('active_user') || 'Aneesh'}
+          onChange={(e) => {
+            localStorage.setItem('active_user', e.target.value);
+            window.location.reload();
+          }}
+        >
+          <option value="Aneesh">Aneesh</option>
+          <option value="Pragya">Pragya</option>
+        </select>
+      </div>
+
       <div className="sidebar-section">
         <div className="sidebar-section-label">Navigation</div>
         {navItems.map(({ to, icon: Icon, label }) => (

@@ -37,11 +37,12 @@ def _csv_response(rows: list, headers: list, filename: str):
 
 @router.get("/template/transactions")
 def download_transactions_template():
+    today_str = date.today().isoformat()
     sample = [
-        {"date": "2024-01-15", "amount": "500.00", "type": "expense", "category": "Food & Dining",
+        {"date": today_str, "amount": "500.00", "type": "expense", "category": "Food & Dining",
          "account": "HDFC Savings", "note": "Lunch", "subcategory": "Restaurant"},
-        {"date": "2024-01-01", "amount": "50000.00", "type": "income", "category": "Salary",
-         "account": "HDFC Savings", "note": "January salary", "subcategory": ""},
+        {"date": today_str, "amount": "50000.00", "type": "income", "category": "Salary",
+         "account": "HDFC Savings", "note": "Salary", "subcategory": ""},
     ]
     return _csv_response(sample, TRANSACTION_HEADERS, "transactions_template.csv")
 
@@ -57,9 +58,10 @@ def download_accounts_template():
 
 @router.get("/template/investments")
 def download_investments_template():
+    today_str = date.today().isoformat()
     sample = [
         {"platform": "Zerodha", "instrument_name": "Nifty 50 Index Fund",
-         "amount_invested": "10000.00", "units": "100.5", "date_invested": "2024-01-01",
+         "amount_invested": "10000.00", "units": "100.5", "date_invested": today_str,
          "current_value": "11500.00", "notes": "SIP"},
     ]
     return _csv_response(sample, STOCK_HEADERS, "investments_template.csv")
@@ -102,20 +104,35 @@ async def commit_transactions(file: UploadFile = File(...), db: Session = Depend
     inserted = 0
     skipped = 0
 
+    from backend.routes.transactions import _adjust_balance
+
     for row in reader:
         try:
+            account_name = row.get("account", "").strip() or None
+            category_name = row.get("category", "").strip() or None
+            
+            acc = db.query(BankAccount).filter_by(name=account_name).first() if account_name else None
+            cat = db.query(Category).filter_by(name=category_name).first() if category_name else None
+            
             t = Transaction(
                 date=date.fromisoformat(row["date"].strip()),
                 amount=float(row["amount"].strip()),
                 type=TransactionType(row["type"].strip().lower()),
-                category=row.get("category", "").strip() or None,
+                category_id=cat.id if cat else None,
+                category=category_name,
                 subcategory=row.get("subcategory", "").strip() or None,
-                account=row.get("account", "").strip() or None,
+                account_id=acc.id if acc else None,
+                account=account_name,
                 note=row.get("note", "").strip() or None,
             )
             db.add(t)
+            db.flush()  # need to flush to let before_flush set user_id or handle identity? Actually _adjust_balance uses account_id
+
+            if acc:
+                _adjust_balance(db, acc.id, t.amount, t.type.value)
+                
             inserted += 1
-        except Exception:
+        except Exception as e:
             skipped += 1
 
     db.commit()

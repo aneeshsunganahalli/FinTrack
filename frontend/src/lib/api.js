@@ -5,6 +5,12 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+api.interceptors.request.use((config) => {
+  const user = localStorage.getItem('active_user') || 'Aneesh';
+  config.headers['X-User-Id'] = user;
+  return config;
+});
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 export const getDashboard = () => api.get('/dashboard');
 export const getAnalytics = (params) => api.get('/dashboard/analytics', { params });

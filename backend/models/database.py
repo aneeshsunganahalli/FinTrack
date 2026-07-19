@@ -10,6 +10,11 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql import func
 import enum
 import os
+import contextvars
+from sqlalchemy import event
+from sqlalchemy.orm import with_loader_criteria
+
+user_id_var = contextvars.ContextVar("user_id", default="Aneesh")
 
 DB_PATH = os.getenv("FINTRACK_DB", os.path.join(os.path.dirname(__file__), "../../finance.db"))
 DATABASE_URL = f"sqlite:///{os.path.abspath(DB_PATH)}"
@@ -21,6 +26,32 @@ engine = create_engine(
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+class UserOwned(Base):
+    __abstract__ = True
+    user_id = Column(String(50), default="Aneesh", nullable=False, index=True)
+
+from sqlalchemy.orm import Session
+
+@event.listens_for(Session, 'do_orm_execute')
+def _add_filtering_criteria(execute_state):
+    uid = user_id_var.get()
+    if execute_state.is_select and not execute_state.is_column_load and not execute_state.is_relationship_load:
+        execute_state.statement = execute_state.statement.options(
+            with_loader_criteria(
+                UserOwned,
+                lambda cls: cls.user_id == uid,
+                include_aliases=True,
+                propagate_to_loaders=True
+            )
+        )
+
+@event.listens_for(Session, 'before_flush')
+def _receive_before_flush(session, flush_context, instances):
+    uid = user_id_var.get()
+    for obj in session.new:
+        if hasattr(obj, 'user_id'):
+            obj.user_id = uid
 
 
 def get_db():
@@ -43,6 +74,7 @@ class AccountType(str, enum.Enum):
     current = "current"
     wallet = "wallet"
     credit = "credit"
+    piggy_bank = "piggy_bank"
 
 class WishlistPriority(str, enum.Enum):
     low = "low"
@@ -69,11 +101,11 @@ class DebtStatus(str, enum.Enum):
 
 # ─── Models ───────────────────────────────────────────────────────────────────
 
-class Category(Base):
+class Category(UserOwned):
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), unique=True, nullable=False)
+    name = Column(String(100), nullable=False)
     icon = Column(String(50), default="tag")
     color = Column(String(20), default="#00D09C")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -81,7 +113,7 @@ class Category(Base):
     transactions = relationship("Transaction", back_populates="category_rel")
 
 
-class BankAccount(Base):
+class BankAccount(UserOwned):
     __tablename__ = "bank_accounts"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -97,7 +129,7 @@ class BankAccount(Base):
     transactions = relationship("Transaction", back_populates="account_rel", foreign_keys="[Transaction.account_id]")
 
 
-class Transaction(Base):
+class Transaction(UserOwned):
     __tablename__ = "transactions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -118,7 +150,7 @@ class Transaction(Base):
     account_rel = relationship("BankAccount", back_populates="transactions", foreign_keys=[account_id])
 
 
-class WishlistItem(Base):
+class WishlistItem(UserOwned):
     __tablename__ = "wishlist"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -133,7 +165,7 @@ class WishlistItem(Base):
     added_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-class StockInvestment(Base):
+class StockInvestment(UserOwned):
     __tablename__ = "stock_investments"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -151,16 +183,16 @@ class StockInvestment(Base):
     account_rel = relationship("BankAccount")
 
 
-class Settings(Base):
+class Settings(UserOwned):
     __tablename__ = "settings"
 
     id = Column(Integer, primary_key=True, index=True)
-    key = Column(String(100), unique=True, nullable=False)
+    key = Column(String(100), nullable=False)
     value = Column(Text)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
-class Subscription(Base):
+class Subscription(UserOwned):
     __tablename__ = "subscriptions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -179,7 +211,7 @@ class Subscription(Base):
     account_rel = relationship("BankAccount")
 
 
-class Debt(Base):
+class Debt(UserOwned):
     __tablename__ = "debts"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -198,7 +230,7 @@ class Debt(Base):
     account_rel = relationship("BankAccount")
 
 
-class MutualFund(Base):
+class MutualFund(UserOwned):
     __tablename__ = "mutual_funds"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -214,7 +246,7 @@ class MutualFund(Base):
     transactions = relationship("MutualFundTransaction", back_populates="fund", cascade="all, delete-orphan")
 
 
-class MutualFundTransaction(Base):
+class MutualFundTransaction(UserOwned):
     __tablename__ = "mutual_fund_transactions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -241,39 +273,53 @@ def init_db():
 def _seed_defaults():
     db = SessionLocal()
     try:
-        # Seed categories
-        if db.query(Category).count() == 0:
-            default_categories = [
-                {"name": "Food & Dining",    "icon": "utensils",      "color": "#F97316"},
-                {"name": "Rent & Housing",   "icon": "home",          "color": "#8B5CF6"},
-                {"name": "Transport",        "icon": "car",           "color": "#3B82F6"},
-                {"name": "Shopping",         "icon": "shopping-bag",  "color": "#EC4899"},
-                {"name": "Bills & Utilities","icon": "zap",           "color": "#EAB308"},
-                {"name": "Entertainment",    "icon": "film",          "color": "#06B6D4"},
-                {"name": "Health",           "icon": "heart",         "color": "#EF4444"},
-                {"name": "Investments",      "icon": "trending-up",   "color": "#00D09C"},
-                {"name": "Education",        "icon": "book-open",     "color": "#6366F1"},
-                {"name": "Misc",             "icon": "more-horizontal","color": "#6B7280"},
-                {"name": "Income",           "icon": "dollar-sign",   "color": "#10B981"},
-                {"name": "Salary",           "icon": "briefcase",     "color": "#14B8A6"},
-                {"name": "Bank Charges",     "icon": "credit-card",   "color": "#F43F5E"},
-            ]
-            for cat in default_categories:
-                db.add(Category(**cat))
+        users = ["Aneesh", "Pragya"]
+        for user in users:
+            token = user_id_var.set(user)
+            try:
+                # Seed categories
+                if db.query(Category).count() == 0:
+                    default_categories = [
+                        {"name": "Food & Dining",    "icon": "utensils",      "color": "#F97316"},
+                        {"name": "Rent & Housing",   "icon": "home",          "color": "#8B5CF6"},
+                        {"name": "Transport",        "icon": "car",           "color": "#3B82F6"},
+                        {"name": "Shopping",         "icon": "shopping-bag",  "color": "#EC4899"},
+                        {"name": "Bills & Utilities","icon": "zap",           "color": "#EAB308"},
+                        {"name": "Entertainment",    "icon": "film",          "color": "#06B6D4"},
+                        {"name": "Health",           "icon": "heart",         "color": "#EF4444"},
+                        {"name": "Investments",      "icon": "trending-up",   "color": "#00D09C"},
+                        {"name": "Education",        "icon": "book-open",     "color": "#6366F1"},
+                        {"name": "Misc",             "icon": "more-horizontal","color": "#6B7280"},
+                        {"name": "Income",           "icon": "dollar-sign",   "color": "#10B981"},
+                        {"name": "Salary",           "icon": "briefcase",     "color": "#14B8A6"},
+                        {"name": "Bank Charges",     "icon": "credit-card",   "color": "#F43F5E"},
+                    ]
+                    for cat in default_categories:
+                        db.add(Category(**cat))
 
-        # Seed default settings
-        defaults = {
-            "ollama_url": "http://localhost:11434",
-            "ollama_model": "llama3",
-            "currency": "INR",
-            "currency_symbol": "₹",
-            "default_account_id": "",
-            "twelvedata_api_key": "",
-        }
-        for k, v in defaults.items():
-            if not db.query(Settings).filter_by(key=k).first():
-                db.add(Settings(key=k, value=v))
+                # Seed Piggy Bank
+                if db.query(BankAccount).filter_by(account_type=AccountType.piggy_bank).count() == 0:
+                    db.add(BankAccount(
+                        name="Piggy Bank",
+                        account_type=AccountType.piggy_bank,
+                        current_balance=0.0
+                    ))
 
-        db.commit()
+                # Seed default settings
+                defaults = {
+                    "ollama_url": "http://localhost:11434",
+                    "ollama_model": "llama3",
+                    "currency": "INR",
+                    "currency_symbol": "₹",
+                    "default_account_id": "",
+                    "twelvedata_api_key": "",
+                }
+                for k, v in defaults.items():
+                    if not db.query(Settings).filter_by(key=k).first():
+                        db.add(Settings(key=k, value=v))
+
+                db.commit()
+            finally:
+                user_id_var.reset(token)
     finally:
         db.close()
