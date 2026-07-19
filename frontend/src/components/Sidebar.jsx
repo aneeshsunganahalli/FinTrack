@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowLeftRight, Building2, Heart,
-  TrendingUp, BarChart2, Bot, Settings, Wallet, Repeat, HandCoins,
+  TrendingUp, BarChart2, Bot, Settings, Wallet, Repeat, HandCoins, PiggyBank,
 } from 'lucide-react';
 
 const navItems = [
@@ -15,6 +15,7 @@ const navItems = [
   { to: '/analytics', icon: BarChart2, label: 'Analytics' },
   { to: '/ai', icon: Bot, label: 'Ollama' },
   { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/piggy-bank', icon: PiggyBank, label: 'Piggy Bank', mobileOnly: true },
 ];
 
 export default function Sidebar() {
@@ -45,12 +46,12 @@ export default function Sidebar() {
 
       <div className="sidebar-section">
         <div className="sidebar-section-label">Navigation</div>
-        {navItems.map(({ to, icon: Icon, label }) => (
+        {navItems.map(({ to, icon: Icon, label, mobileOnly }) => (
           <NavLink
             key={to}
             to={to}
             end={to === '/'}
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}${mobileOnly ? ' mobile-only' : ''}`}
           >
             <Icon size={14} />
             {label}

@@ -14,6 +14,7 @@ import Analytics from './pages/Analytics';
 import Debts from './pages/Debts';
 import AIInsights from './pages/AIInsights';
 import Settings from './pages/Settings';
+import PiggyBank from './pages/PiggyBank';
 import PiggyBankWidget from './components/PiggyBankWidget';
 import { useEffect } from 'react';
 
@@ -51,6 +52,7 @@ export default function App() {
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/ai" element={<AIInsights />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/piggy-bank" element={<PiggyBank />} />
             </Routes>
           </main>
           <PiggyBankWidget />

@@ -37,6 +37,10 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+.mobile-only {
+  display: none !important;
+}
+
 html, body, #root {
   height: 100%;
   font-family: 'Merriweather', serif;
@@ -1036,6 +1040,10 @@ tr:hover .row-actions { opacity: 1; }
 
 /* ── Responsive Mobile (iPhone 15 Plus & others) ── */
 @media (max-width: 768px) {
+  .mobile-only {
+    display: flex !important;
+  }
+  
   .app-shell {
     flex-direction: column;
   }
@@ -1205,8 +1213,7 @@ tr:hover .row-actions { opacity: 1; }
   }
 
   .piggy-bank-widget {
-    top: 75px;
-    bottom: auto;
+    display: none !important;
   }
   .piggy-bank-popup {
     top: 70px;
