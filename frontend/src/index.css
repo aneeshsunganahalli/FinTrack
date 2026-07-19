@@ -88,7 +88,7 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* ── Layout ────────────────────────────────────────────────── */
-.app-shell { display: flex; height: 100vh; overflow: hidden; }
+.app-shell { display: flex; height: 100dvh; overflow: hidden; }
 
 .sidebar {
   width: 236px;
@@ -105,6 +105,7 @@ body {
 .main-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 30px 36px;
   background: var(--bg-base);
 }
@@ -1016,6 +1017,23 @@ tr:hover .row-actions { opacity: 1; }
   font-size: 13px;
 }
 
+.piggy-bank-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+.piggy-bank-popup {
+  position: absolute;
+  bottom: 70px;
+  right: 0;
+  width: 320px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  border: 1px solid var(--accent-border);
+  background: var(--bg-card);
+  padding: 20px;
+}
+
 /* ── Responsive Mobile (iPhone 15 Plus & others) ── */
 @media (max-width: 768px) {
   .app-shell {
@@ -1150,10 +1168,50 @@ tr:hover .row-actions { opacity: 1; }
     gap: 16px;
   }
   
-  .page-header > div:last-child {
+  .page-header > div:last-child:not(.tabs) {
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+
+  .page-header .tabs {
+    display: flex !important;
+    flex-direction: row;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  
+  .page-header .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .debt-card {
+    flex-wrap: wrap;
+    gap: 10px !important;
+  }
+  .debt-card > div:nth-child(2) {
+    flex: 1 1 50% !important;
+  }
+  .debt-card > div:nth-child(3) {
+    width: 100%;
+    text-align: right;
+    margin-top: 4px;
+  }
+  .debt-card > .row-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .piggy-bank-widget {
+    top: 75px;
+    bottom: auto;
+  }
+  .piggy-bank-popup {
+    top: 70px;
+    bottom: auto;
+    max-width: 90vw;
   }
   
   .page-header .btn {

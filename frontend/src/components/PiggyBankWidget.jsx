@@ -87,15 +87,9 @@ export default function PiggyBankWidget() {
   };
 
   return (
-    <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 9999 }}>
+    <div className="piggy-bank-widget">
       {open && (
-        <div className="card" style={{ 
-          position: 'absolute', bottom: 70, right: 0, width: 320, 
-          boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
-          border: '1px solid var(--accent-border)',
-          background: 'var(--bg-card)',
-          padding: 20
-        }}>
+        <div className="card piggy-bank-popup">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent)' }}>
               <PiggyBank size={18} /> Piggy Bank
