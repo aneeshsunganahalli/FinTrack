@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, CheckCircle, ArrowUpRight, ArrowDownLeft, Clock } from 'lucide-react';
-import { getDebts, createDebt, updateDebt, deleteDebt, markDebtPaid, getAccounts } from '../lib/api';
+import { Plus, Pencil, Trash2, CheckCircle, ArrowUpRight, ArrowDownLeft, Clock, Link as LinkIcon } from 'lucide-react';
+import { getDebts, createDebt, updateDebt, deleteDebt, markDebtPaid, getAccounts, getTransactions } from '../lib/api';
 import { fmt, fmtDate } from '../lib/utils';
 import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal';
 import Spinner from '../components/Spinner';
 import { useToast } from '../components/Toast';
 
-function DebtForm({ initial, accounts, onSave, onClose }) {
+function DebtForm({ initial, accounts, transactions, onSave, onClose }) {
   const [form, setForm] = useState({
     person_name: '',
     amount: '',
@@ -15,6 +15,7 @@ function DebtForm({ initial, accounts, onSave, onClose }) {
     date_created: new Date().toISOString().slice(0, 10),
     due_date: '',
     account_id: '',
+    linked_transaction_id: '',
     note: '',
     ...initial,
   });
@@ -82,6 +83,16 @@ function DebtForm({ initial, accounts, onSave, onClose }) {
         </span>
       </div>
       <div className="form-group">
+        <label className="form-label">Linked Transaction (Optional)</label>
+        <select className="form-select" value={form.linked_transaction_id || ''} onChange={e => set('linked_transaction_id', e.target.value ? parseInt(e.target.value) : '')}>
+          <option value="">— No transaction —</option>
+          {transactions?.map(t => <option key={t.id} value={t.id}>{t.date} - {t.category || t.note || 'Txn'} ({fmt(t.amount)})</option>)}
+        </select>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+          When marked as paid, the original transaction's amount will be reduced.
+        </span>
+      </div>
+      <div className="form-group">
         <label className="form-label">Note</label>
         <input className="form-input" placeholder="Optional note" value={form.note || ''} onChange={e => set('note', e.target.value)} />
       </div>
@@ -104,6 +115,7 @@ function daysOutstanding(dateStr) {
 export default function Debts() {
   const [debts, setDebts] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [markPaidModal, setMarkPaidModal] = useState(null);
@@ -113,8 +125,8 @@ export default function Debts() {
 
   function load() {
     setLoading(true);
-    Promise.all([getDebts({ status: tab }), getAccounts()])
-      .then(([d, a]) => { setDebts(d.data); setAccounts(a.data); })
+    Promise.all([getDebts({ status: tab }), getAccounts(), getTransactions({ limit: 6 })])
+      .then(([d, a, t]) => { setDebts(d.data); setAccounts(a.data); setTransactions(t.data); })
       .finally(() => setLoading(false));
   }
 
@@ -241,6 +253,11 @@ export default function Debts() {
                   </div>
                   {debt.note && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>{debt.note}</div>}
                   {debt.account_name && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Account: {debt.account_name}</div>}
+                  {debt.linked_transaction_id && (
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <LinkIcon size={10} /> Linked to transaction
+                    </div>
+                  )}
                 </div>
 
                 {/* Amount */}
@@ -282,6 +299,7 @@ export default function Debts() {
           <DebtForm
             initial={modal === 'add' ? {} : modal}
             accounts={accounts}
+            transactions={transactions}
             onSave={handleSave}
             onClose={() => setModal(null)}
           />

@@ -192,6 +192,7 @@ class Debt(Base):
     note = Column(Text)
     status = Column(SAEnum(DebtStatus), default=DebtStatus.pending)
     paid_date = Column(Date, nullable=True)
+    linked_transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     account_rel = relationship("BankAccount")
@@ -255,6 +256,7 @@ def _seed_defaults():
                 {"name": "Misc",             "icon": "more-horizontal","color": "#6B7280"},
                 {"name": "Income",           "icon": "dollar-sign",   "color": "#10B981"},
                 {"name": "Salary",           "icon": "briefcase",     "color": "#14B8A6"},
+                {"name": "Bank Charges",     "icon": "credit-card",   "color": "#F43F5E"},
             ]
             for cat in default_categories:
                 db.add(Category(**cat))

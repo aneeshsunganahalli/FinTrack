@@ -271,6 +271,7 @@ class DebtCreate(BaseModel):
     due_date: Optional[date] = None
     account_id: Optional[int] = None
     note: Optional[str] = None
+    linked_transaction_id: Optional[int] = None
 
 class DebtUpdate(BaseModel):
     person_name: Optional[str] = None
@@ -280,6 +281,7 @@ class DebtUpdate(BaseModel):
     due_date: Optional[date] = None
     account_id: Optional[int] = None
     note: Optional[str] = None
+    linked_transaction_id: Optional[int] = None
 
 class DebtOut(BaseModel):
     id: int
@@ -293,6 +295,7 @@ class DebtOut(BaseModel):
     note: Optional[str]
     status: DebtStatus
     paid_date: Optional[date]
+    linked_transaction_id: Optional[int]
     created_at: Optional[datetime]
     class Config:
         from_attributes = True

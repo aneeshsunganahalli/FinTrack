@@ -13,7 +13,7 @@ const navItems = [
   { to: '/wishlist', icon: Heart, label: 'Wishlist' },
   { to: '/investments', icon: TrendingUp, label: 'Investments' },
   { to: '/analytics', icon: BarChart2, label: 'Analytics' },
-  { to: '/ai', icon: Bot, label: 'AI Insights' },
+  { to: '/ai', icon: Bot, label: 'Ollama' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 

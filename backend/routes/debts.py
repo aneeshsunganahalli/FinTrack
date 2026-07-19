@@ -24,6 +24,7 @@ def _debt_to_out(debt: Debt, db: Session) -> dict:
         "note": debt.note,
         "status": debt.status,
         "paid_date": debt.paid_date,
+        "linked_transaction_id": debt.linked_transaction_id,
         "created_at": debt.created_at,
         "account_name": None,
     }
@@ -97,8 +98,26 @@ def mark_debt_paid(debt_id: int, db: Session = Depends(get_db)):
     debt.status = DebtStatus.paid
     debt.paid_date = today
 
-    # Create a transaction to adjust the bank balance
-    if debt.account_id:
+    if debt.linked_transaction_id:
+        from backend.routes.transactions import _adjust_balance
+        linked_tx = db.query(Transaction).filter_by(id=debt.linked_transaction_id).first()
+        if linked_tx:
+            # Reverse old balance effect
+            _adjust_balance(db, linked_tx.account_id, linked_tx.amount, linked_tx.type.value, reverse=True, to_account_id=linked_tx.to_account_id)
+            
+            # Reduce transaction amount
+            linked_tx.amount = max(0.0, linked_tx.amount - debt.amount)
+            
+            # Apply new balance effect
+            _adjust_balance(db, linked_tx.account_id, linked_tx.amount, linked_tx.type.value, to_account_id=linked_tx.to_account_id)
+            
+            # Update transaction note
+            note = linked_tx.note or ""
+            note += f" (Reduced by {debt.amount} from IOU: {debt.person_name})"
+            linked_tx.note = note.strip()
+            
+    elif debt.account_id:
+        # Create a transaction to adjust the bank balance
         acc = db.query(BankAccount).filter_by(id=debt.account_id).first()
         if acc:
             if debt.direction == DebtDirection.owed_to_me:

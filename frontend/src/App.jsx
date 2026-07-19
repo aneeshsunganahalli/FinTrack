@@ -30,16 +30,16 @@ export default function App() {
           <Sidebar />
           <main className="main-content">
             <Routes>
-              <Route path="/"             element={<Dashboard />} />
+              <Route path="/" element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
-              <Route path="/accounts"     element={<Accounts />} />
-              <Route path="/debts"        element={<Debts />} />
+              <Route path="/accounts" element={<Accounts />} />
+              <Route path="/debts" element={<Debts />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
-              <Route path="/wishlist"     element={<Wishlist />} />
-              <Route path="/investments"  element={<Investments />} />
-              <Route path="/analytics"    element={<Analytics />} />
-              <Route path="/ai"           element={<AIInsights />} />
-              <Route path="/settings"     element={<Settings />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/investments" element={<Investments />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/ai" element={<AIInsights />} />
+              <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>
         </div>
