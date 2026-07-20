@@ -1040,6 +1040,11 @@ tr:hover .row-actions { opacity: 1; }
 
 /* ── Responsive Mobile (iPhone 15 Plus & others) ── */
 @media (max-width: 768px) {
+  body {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
   .mobile-only {
     display: flex !important;
   }
