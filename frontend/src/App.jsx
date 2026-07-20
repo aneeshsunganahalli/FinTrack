@@ -16,17 +16,25 @@ import AIInsights from './pages/AIInsights';
 import Settings from './pages/Settings';
 import PiggyBank from './pages/PiggyBank';
 import PiggyBankWidget from './components/PiggyBankWidget';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function App() {
+  const [activeUser, setActiveUser] = useState(localStorage.getItem('active_user') || 'Aneesh');
+
   useEffect(() => {
-    const user = localStorage.getItem('active_user') || 'Aneesh';
-    if (user === 'Pragya') {
+    if (activeUser === 'Pragya') {
       document.body.classList.add('theme-pink');
     } else {
       document.body.classList.remove('theme-pink');
     }
-  }, []);
+  }, [activeUser]);
+
+  const switchUser = () => {
+    const newUser = activeUser === 'Aneesh' ? 'Pragya' : 'Aneesh';
+    localStorage.setItem('active_user', newUser);
+    setActiveUser(newUser);
+    window.location.reload();
+  };
 
   return (
     <BrowserRouter>
@@ -38,6 +46,13 @@ export default function App() {
               <img src="/Favicon.png" alt="Jarvis logo" width={35} height={35} style={{ objectFit: 'contain' }} />
             </div>
             <span>Jarvis</span>
+            <button
+              className="mobile-user-avatar"
+              onClick={switchUser}
+              title={`Switch from ${activeUser}`}
+            >
+              {activeUser[0]}
+            </button>
           </div>
           <Sidebar />
           <main className="main-content">

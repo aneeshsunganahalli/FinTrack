@@ -28,7 +28,7 @@ export default function Sidebar() {
         <span>Jarvis</span>
       </div>
 
-      <div className="sidebar-section" style={{ marginBottom: '14px' }}>
+      <div className="sidebar-section user-section" style={{ marginBottom: '14px' }}>
         <div className="sidebar-section-label">User</div>
         <select 
           className="form-select" 
